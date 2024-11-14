@@ -19,7 +19,7 @@ RESIZABLE = True
 
 
 
-TREE = load_image("resources/tree5.png")
+image = None
 
 def draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
@@ -38,7 +38,8 @@ def draw():
     draw_text(font, fontsize, text, pos, Color(200, 200, 200))
     
     # Zeichnet das geladene Baum-Bild auf den Bildschirm
-    draw_surface(TREE, (w/2-64,400))
+    if image:
+        draw_surface(image, (w/2-64,400))
         
 
 def update(dt):
@@ -54,8 +55,16 @@ def input(event):
 
 def ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
+    
+    global image
+
+    # Setze Fenstertitel
     set_window_title("Demo 1")
-        
+    # Versuche eine Grafik zu laden, aber nicht verzweifeln, wenn sie nicht da ist...
+    try:
+        image = load_image("resources/tree5.png")
+    except FileNotFoundError:
+        print("Could not find image, going on without it...")
 
 def resized(new_width, new_height):
     # Wird aufgerufen, wenn die Grösse des Grafikfensters verändert wird
