@@ -1,4 +1,4 @@
-from sceneitem import SceneItem
+from graphics2d.scenetree.sceneitem import SceneItem
 
 class CanvasItem(SceneItem):
     """
@@ -11,6 +11,12 @@ class CanvasItem(SceneItem):
         else:
             self.name = "CanvasItem-" + str(id)
 
+    def request_redraw():
+        """
+        Call this to notify the SceneTree that this SceneItem needs to redraw itself.
+        """
+        self.get_tree().request_redraw(self)
+        
 
     def ready():
         pass

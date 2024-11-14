@@ -11,6 +11,7 @@ import pygame
 import pygame.font
 import datetime
 import graphics2d.drawing as draw
+from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
 
 VALID_IMAGE_EXTENSIONS = ['.bmp', '.jpg', '.jpeg', '.gif', '.lbm', '.pbm', '.pgm', '.ppm', '.pcx', '.png', '.pnm', '.tga', '.tiff', '.webp', '.xpm']
 
@@ -40,6 +41,7 @@ settings = {
     'DEFAULT_FONT_SIZE': 24
 }
 
+scene_tree = None
 
 screen = None
 clock = None
@@ -55,11 +57,12 @@ _dirty_screen_rects = []
 
 
 def _init():
-    global clock
+    global clock, scene_tree
     pygame.init()    
     _honor_display_mode_settings()
     clock = pygame.time.Clock()
- 
+    scene_tree = SceneTree()
+     
 def _get_display_flags():
     flags = 0
     if settings['RESIZABLE']:
@@ -93,17 +96,39 @@ def _event_loop():
                 hooks['resized'](event.w, event.h)
                 request_redraw()
             else:
-                hooks['input'](event)
+                _handle_scenetree_input(event)
+                hooks['input'](event)                
                 
         now = datetime.datetime.now()
         dt = now-last
         last = now
-        hooks['update'](dt.seconds * 1000 + (dt.microseconds / 1000))
-        if needs_redraw or settings['ALWAYS_REDRAW']:
+        msecs = dt.seconds * 1000 + (dt.microseconds / 1000)
+        hooks['update'](msecs)
+        _handle_scenetree_updates(msecs)
+        if needs_redraw or settings['ALWAYS_REDRAW'] or scene_tree.has_redraw_requests():
             hooks['draw']()
+            _handle_scenetree_drawing()
             pygame.display.flip()
             needs_redraw = False
         clock.tick(settings['MAX_FPS'])
+
+def _handle_scenetree_input(event):
+    # TODO: Figure out how to mark an event as handled so we stop propagating it
+    for item in scene_tree.depthfirst_postorder():
+        item.input(event)
+
+def _handle_scenetree_updates(dt):
+    for item in scene_tree.depthfirst_postorder():
+        item.update(dt)
+
+def _handle_scenetree_drawing():
+    # TODO: Make sure we draw children before parents... ?
+    for item in scene_tree.redraw_requests:
+        item.draw()
+    scene_tree.clear_redraw_requests()
+    
+    
+
 
 
 def request_redraw():
@@ -173,6 +198,13 @@ def get_window_size():
     """
     return screen.get_size()
 
+def get_runtime_in_msecs():
+    """
+    Returns the number of msecs this application has been running
+    """
+    return pygame.time.get_ticks()
+
+
 def get_default_fontname():
     """
     Returns the default font name as a string
@@ -208,7 +240,7 @@ def save_screen(filename):
 
 def go():
     """
-    Starts the event loop
+    Configures pygame and starts the event loop
     """
     frm = inspect.stack()[1]
     mod = inspect.getmodule(frm[0])

@@ -1,2 +1,5 @@
+.vscode
+__pycache__
 __pycache__/*
 graphics2d/__pycache__/*
+graphics2d/scenetree/__pycache__

@@ -16,46 +16,46 @@ class SceneItem:
         else:
             self.name = "SceneItem-" + str(id)
 
-    def get_parent():
+    def get_parent(self):
         if self.parent and self.parent():
             return self.parent()
         else:
             return None
 
-    def get_tree():
+    def get_tree(self):
         if self.tree and self.tree():
             return self.tree()
         else:
             return None
         
-    def enter():
+    def enter(self):
         """
         Callback: Called when the item enters the scene tree
         """
         pass
         
-    def exit():
+    def exit(self):
         """
         Callback: Called when the item exists the scene tree
         """
         pass
 
-    def add_child(child):
+    def add_child(self, child):
         if child in self.children:
             raise ValueError("The item {} is already a child of {}".format(child.name, self.name))
         if child.get_parent() != None:
-            raise ValueError("The item {} already has parent {} and can't be added as a child of {}".format(child.name, child.get_parent().name, self.name)))
+            raise ValueError("The item {} already has parent {} and can't be added as a child of {}".format(child.name, child.get_parent().name, self.name))
         self.children.append(child)
         child.parent = weakref.ref(self)
-        self.child.tree = weakref.ref(tree)
-        tree = get_tree()
+        child.tree = weakref.ref(self.get_tree())
+        tree = self.get_tree()
         if tree:
             tree.notify_enter(child)
         
-    def remove_child(child):
+    def remove_child(self, child):
         if child.get_parent() != self:
             raise ValueError("The item {} is not a child of {}".format(child.name, self.name))
-        tree = get_tree()
+        tree = self.get_tree()
         if tree:        
             tree.notify_exit(child)
         self.children.remove(child)
