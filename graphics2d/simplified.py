@@ -144,7 +144,7 @@ def draw_line(start, end, color, width=1):
     """
     Draws a line from start (x1, y1) to end (x2, y2)
     """
-    draw.draw_line(screen, color, start, end, width)    
+    draw.draw_line(screen, start, end, color, width)    
 
 def draw_polyline(points, color, is_closed=False, width=1):
     """
