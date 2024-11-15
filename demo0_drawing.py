@@ -8,6 +8,7 @@ HEIGHT = 800
 # Legt fest, ob die Grösse des Fensters vom Benutzer verändert werden kann. Default ist False.
 RESIZABLE = True
 
+smiley_image = None
 
 def draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
@@ -48,6 +49,10 @@ def draw():
     fontsize = 30
     draw_text(fontname, fontsize, "Dare to do mighty things!", (40, 200), Color("orange"))
 
+    # Render an image
+    if smiley_image:
+        draw_surface(smiley_image, (450, 170))
+
 
 def input(event):
     # Wird aufgerufen, wenn ein Ereignis (z.B. ein Mausklick oder ein Tastendruck) vorliegt
@@ -58,9 +63,16 @@ def input(event):
 def ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
 
+    # Lade ein Bild
+    global smiley_image
+    try:
+        smiley_image = load_image("resources/Smiley_green_alien_lol.png")
+    except FileNotFoundException:
+        print("Bilddatei nicht gefunden...")
+
     # Setze Fenstertitel
     set_window_title("Demo 0 - Drawing")
-
+    
 
 # Startet das Grafikprogramm.
 go()
