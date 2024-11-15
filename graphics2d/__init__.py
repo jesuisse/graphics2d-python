@@ -1,4 +1,4 @@
-from graphics2d.framework import go, Global, request_redraw, set_window_title, get_window_size, get_runtime_in_msecs
+from graphics2d.framework import go, VarContainer, request_redraw, set_window_title, get_window_size, get_runtime_in_msecs
 from pygame import Rect, Color
 from pygame.math import Vector2, clamp, lerp
 import pygame.locals as const
@@ -27,8 +27,6 @@ for name in __imported_functions:
 for name in __imported_consts:
     globals()[name] = getattr(const, name)
 
-# Use this to avoid talking about the global keyword when trying to set globals in a procedure
-shared = graphics2d.framework.Global()
 
 # Provide a few default colors
 BLACK = Color("black")

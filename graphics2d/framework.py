@@ -13,7 +13,7 @@ import datetime
 import graphics2d.drawing as draw
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
 
-class Global:
+class VarContainer:
     """
     This serves as a container for quasi-global variables.
     """
