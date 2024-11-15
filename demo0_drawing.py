@@ -4,7 +4,7 @@ from graphics2d import *
 WIDTH = 800
 HEIGHT = 800
 
-# Legt fest, ob die Grösse des Fensters vom Benutzer verändert werden kann. Default ist False.
+# Die Grösse des Grafikfensters soll angepasst werden können
 RESIZABLE = True
 
 smiley_image = None
@@ -53,12 +53,6 @@ def draw():
         draw_surface(smiley_image, (450, 170))
 
 
-def input(event):
-    # Wird aufgerufen, wenn ein Ereignis (z.B. ein Mausklick oder ein Tastendruck) vorliegt
-    
-    if event.type == MOUSEBUTTONDOWN and event.button == 1:
-        save_screen("screenshot.png")
-
 def ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
 
@@ -73,5 +67,5 @@ def ready():
     set_window_title("Demo 0 - Drawing")
     
 
-# Startet das Grafikprogramm.
+# Konfiguriert und startet das Grafikprogramm.
 go()
