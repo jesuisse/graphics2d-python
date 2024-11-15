@@ -127,9 +127,6 @@ def _handle_scenetree_drawing():
         item.draw()
     scene_tree.clear_redraw_requests()
     
-    
-
-
 
 def request_redraw():
     """
@@ -152,6 +149,18 @@ def draw_polyline(points, color, is_closed=False, width=1):
     If is_closed is True, a line will be drawn from the last to the first point to make a polygon shape.
     """
     draw.draw_polyline(screen, points, color, is_closed, width)
+
+def draw_filled_polygon(points, color):
+    """
+    Draws a polygon from a sequence of points.    
+    """
+    draw.draw_filled_polygon(screen, points, color)
+
+def draw_rect(topleft, size, color, width=1):
+    """
+    Draws a rectangle 
+    """
+    draw.draw_rect(screen, pygame.Rect(topleft, size), color, width)
 
 def draw_filled_rect(topleft, size, color):
     """

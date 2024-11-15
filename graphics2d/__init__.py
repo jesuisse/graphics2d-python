@@ -1,4 +1,4 @@
-from graphics2d.simplified import go, request_redraw, draw_line, draw_polyline, draw_filled_rect, draw_circle, draw_filled_circle, draw_surface, draw_text, get_text_size, get_window_size, get_runtime_in_msecs, get_default_fontname, get_all_fontnames, load_image, save_screen, set_window_title
+from graphics2d.simplified import go, request_redraw, draw_line, draw_polyline, draw_filled_polygon, draw_rect, draw_filled_rect, draw_circle, draw_filled_circle, draw_surface, draw_text, get_text_size, get_window_size, get_runtime_in_msecs, get_default_fontname, get_all_fontnames, load_image, save_screen, set_window_title
 from pygame import Rect, Color
 from pygame.math import Vector2, clamp, lerp
 import pygame.locals as const
