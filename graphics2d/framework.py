@@ -13,6 +13,12 @@ import datetime
 import graphics2d.drawing as draw
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
 
+class Global:
+    """
+    This serves as a container for quasi-global variables.
+    """
+    pass
+
 def empty_func(*args):
     pass
 
