@@ -66,7 +66,7 @@ def ready():
     global smiley_image
     try:
         smiley_image = load_image("resources/Smiley_green_alien_lol.png")
-    except FileNotFoundException:
+    except FileNotFoundError:
         print("Bilddatei nicht gefunden...")
 
     # Setze Fenstertitel
