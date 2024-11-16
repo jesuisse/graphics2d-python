@@ -19,7 +19,7 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title'
+    'set_window_title', 'VarContainer'
     ]
 
 import inspect

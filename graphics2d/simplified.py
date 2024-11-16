@@ -101,7 +101,9 @@ def load_image(filename):
             raise ValueError("The filename you provided doesn't look like an image I can load. (Valid image extensions are {})".format(", ".join(VALID_IMAGE_EXTENSIONS)))
     except TypeError:
         raise ValueError("You must provide a valid string as a filename for load_image.")
-    return _pygame.image.load(filename)
+    surface = _pygame.image.load(filename)
+    surface = surface.convert_alpha(_framework.screen)
+    return surface
 
 def save_screen(filename):
     _pygame.image.save(framework.screen, filename)
