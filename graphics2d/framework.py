@@ -138,16 +138,22 @@ def _event_loop():
 def _handle_scenetree_input(event):
     # TODO: Figure out how to mark an event as handled so we stop propagating it
     for item in scene_tree.depthfirst_postorder():
-        item.input(event)
+        item.on_input(event)
 
 def _handle_scenetree_updates(dt):
     for item in scene_tree.depthfirst_postorder():
-        item.update(dt)
+        item.on_update(dt)
 
 def _handle_scenetree_drawing():
     # TODO: Make sure we draw children before parents... ?
+    
+    size = Vector2(screen.get_size())
     for item in scene_tree.redraw_requests:
-        item.draw()
+        # TODO: For items with a size, we should set that as the clip size so items
+        # can't draw outside their reported size.
+        clip_size = (size.x - item.position.x, size.y - item.position.y)
+        r = Rect(item.position, clip_size)
+        item.on_draw(screen.subsurface(r))
     scene_tree.clear_redraw_requests()
     
 

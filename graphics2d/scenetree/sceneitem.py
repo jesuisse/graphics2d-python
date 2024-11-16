@@ -10,11 +10,16 @@ class SceneItem:
         self.children = []      # Will hold references to all the children
         self.parent = None      # Will hold a weak reference to the parent
         self.tree = None        # Will hold a weak reference to the scene tree
+        self.filtered_events = ()  # Will receive all events
 
         if 'name' in kwargs:
             self.name = kwargs['name']
         else:
             self.name = "SceneItem-" + str(id)
+        
+        if 'filtered_events' in kwargs:
+            self.filtered_events = kwargs['filtered_events'] 
+
 
     def get_parent(self):
         if self.parent and self.parent():
@@ -28,13 +33,13 @@ class SceneItem:
         else:
             return None
         
-    def enter(self):
+    def on_enter(self):
         """
         Callback: Called when the item enters the scene tree
         """
         pass
         
-    def exit(self):
+    def on_exit(self):
         """
         Callback: Called when the item exists the scene tree
         """
