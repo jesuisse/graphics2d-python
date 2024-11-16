@@ -8,8 +8,16 @@ layouting and GUI coding.
 
 import pygame
 import pygame.font
+from pygame.math import Vector2
 import graphics2d.drawing as draw
 import graphics2d.framework as framework
+
+__all__ = [
+    'draw_line', 'draw_polyline', 'draw_filled_polygon', 'draw_rect',
+    'draw_filled_rect', 'draw_circle', 'draw_filled_circle', 'draw_surface',
+    'draw_text', 'get_text_size', 
+    'get_default_fontname', 'get_all_fontnames', 'load_image', 'save_screen'
+    ]
 
 VALID_IMAGE_EXTENSIONS = ['.bmp', '.jpg', '.jpeg', '.gif', '.lbm', '.pbm', '.pgm', '.ppm', '.pcx', '.png', '.pnm', '.tga', '.tiff', '.webp', '.xpm']
 
@@ -71,7 +79,7 @@ def draw_surface(source_surface, destination_position, source_area=None):
     framework.screen.blit(source_surface, destination_position, source_area)
 
 
-def get_text_size(fontname : str, fontsize : float, text : str):
+def get_text_size(fontname : str, fontsize : float, text : str) -> Vector2:
     font = draw.get_font(fontname, fontsize)
     return draw.get_text_size(font, text)
 
@@ -105,4 +113,3 @@ def load_image(filename):
 
 def save_screen(filename):
     pygame.image.save(framework.screen, filename)
-

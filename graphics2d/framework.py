@@ -4,11 +4,28 @@ Simplified 2D Graphics interface for teaching  (c) 2024 by Pascal Schuppli
 This is comparable to pygame zero, but provides access to more of pygame (especially surfaces) and
 a scene tree which can be used to work with graphical objects, some of which are provided to facilitate
 layouting and GUI coding.
+
+This enables students to write minimal valid graphical programs like this:
+
+from graphics2d import *
+
+WIDTH = HEIGHT = 500
+
+def draw():
+    draw_circle((250, 250), 100, RED)
+
+go()
 """
+
+__all__ = [
+    'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
+    'set_window_title'
+    ]
 
 import inspect
 import pygame
 import pygame.font
+from pygame.math import Vector2
 import datetime
 import graphics2d.drawing as draw
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
@@ -49,8 +66,8 @@ scene_tree = None
 screen = None
 clock = None
 needs_redraw = True
-# This leads to draw() callback being called every frame. If you turn this off via disable_auto_redraw(), you'll need to call
-# request_redraw() to have the event loop call draw().
+# This leads to draw() callback being called every frame. If you turn this off 
+# you'll need to call request_redraw() to have the event loop call draw().
 auto_redraw = True
 
 is_fullscreen=False
@@ -142,11 +159,23 @@ def request_redraw():
 def set_window_title(title):
     pygame.display.set_caption(title)
 
-def get_window_size():
+def get_window_size() -> Vector2:
     """
-    Returns a tuple (width, height) containing the size of the window
+    Returns a Vector2 containing the size of the window
     """
-    return screen.get_size()
+    return Vector2(screen.get_size())
+
+def get_window_width():
+    """
+    Returns the width of the window in pixels
+    """
+    return screen.get_width()
+
+def get_window_height():
+    """
+    Returns the height of the window in pixels
+    """
+    return screen.get_height()
 
 def get_runtime_in_msecs():
     """
@@ -170,11 +199,14 @@ def go():
 
     _init()
     pygame.display.set_caption("Graphics 2D Window")
-    _honor_display_mode_settings()
-    hooks['ready']()
-    _event_loop()
-    hooks['exit']()
-    pygame.font.quit()
-    pygame.quit()
-    
+    _honor_display_mode_settings()    
+    try:
+        hooks['ready']()
+        _event_loop()    
+        hooks['exit']()
+    finally:
+        # make sure we quit pygame. If we don't because an exception bypasses this, 
+        # some systems may freeze until they notice we're dead.
+        pygame.quit()
+
         
