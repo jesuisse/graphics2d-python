@@ -1,9 +1,9 @@
 """
 Simplified 2D Graphics interface for teaching  (c) 2024 by Pascal Schuppli
 
-This is comparable to pygame zero, but provides access to more of pygame (especially surfaces) and
-a scene tree which can be used to work with graphical objects, some of which are provided to facilitate
-layouting and GUI coding.
+This provides drawing functions that wrap the drawing module and simplify it slightly by not requiring a
+surface to draw onto; the framework's screen is used. Also, it contains code to check the validity of
+the arguments provided and tries to give meaningful error messages if something is wrong.
 """
 
 import pygame as _pygame
