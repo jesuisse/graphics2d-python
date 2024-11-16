@@ -1,6 +1,5 @@
 from graphics2d import *
 
-
 # Diese Konstanten legen die Grösse des Grafikfensters fest
 WIDTH = 700
 HEIGHT = 750

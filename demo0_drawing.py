@@ -7,7 +7,7 @@ HEIGHT = 800
 # Die Grösse des Grafikfensters soll angepasst werden können
 RESIZABLE = True
 
-smiley_image = None
+peach_image = None
 
 def draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
@@ -46,20 +46,20 @@ def draw():
     # Rendert Text
     fontname = get_default_fontname()
     fontsize = 30
-    draw_text(fontname, fontsize, "Dare to do mighty things!", (40, 200), Color("orange"))
+    draw_text(fontname, fontsize, "Dare to do peachy things!", (40, 200), Color("orange"))
 
     # Render an image
-    if smiley_image:
-        draw_surface(smiley_image, (450, 170))
+    if peach_image:
+        draw_surface(peach_image, (450, 170))
 
 
 def ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
 
     # Lade ein Bild
-    global smiley_image
+    global peach_image
     try:
-        smiley_image = load_image("resources/Smiley_green_alien_lol.png")
+        peach_image = load_image("resources/icon.png")
     except FileNotFoundError:
         print("Bilddatei nicht gefunden...")
 

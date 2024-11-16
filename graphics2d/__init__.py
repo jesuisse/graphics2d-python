@@ -5,10 +5,12 @@ import pygame.locals as const
 from graphics2d.simplified import *
 
 # pygame constants that are handy to have in the global namespace
+# note that QUIT and VIDEORESIZE are not exported because the framework handles them itself and
+# user code never sees them anyway.
 __imported_consts = (
-    'QUIT', 'ACTIVEEVENT', 'KEYDOWN', 'KEYUP', 'MOUSEMOTION', 'MOUSEBUTTONUP', 'MOUSEBUTTONDOWN',
+    'ACTIVEEVENT', 'KEYDOWN', 'KEYUP', 'MOUSEMOTION', 'MOUSEBUTTONUP', 'MOUSEBUTTONDOWN',
     'JOYAXISMOTION', 'JOYBALLMOTION', 'JOYHATMOTION', 'JOYBUTTONUP', 'JOYBUTTONDOWN', 
-    'VIDEORESIZE', 'VIDEOEXPOSE', 'USEREVENT'
+    'VIDEOEXPOSE', 'USEREVENT'
     )
 
 # Import some constants into the local namespace

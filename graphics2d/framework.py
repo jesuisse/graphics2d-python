@@ -47,6 +47,8 @@ hooks = {
     'resized': empty_func
 }
 
+_icon_already_set = False
+
 # global constants which will be picked up from the importing python module and used to
 # for initial configuration of the graphics.
 settings = {
@@ -76,7 +78,10 @@ _dirty_screen_rects = []
 
 def _init():
     global clock, scene_tree
-    _pygame.init()    
+    _pygame.init()
+    icon = _pygame.image.load("resources/icon.png")
+    if not _icon_already_set:
+        _pygame.display.set_icon(icon)
     _honor_display_mode_settings()
     clock = _pygame.time.Clock()
     scene_tree = SceneTree()
@@ -156,6 +161,11 @@ def request_redraw():
 
 def set_window_title(title):
     _pygame.display.set_caption(title)
+    
+def set_window_icon(icon_surface):
+    global _icon_already_set
+    _icon_already_set = True
+    _pygame.display.set_icon(icon_surface)
 
 def get_window_size() -> Vector2:
     """
