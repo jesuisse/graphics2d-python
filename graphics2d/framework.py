@@ -23,11 +23,9 @@ __all__ = [
     ]
 
 import inspect
-import pygame
-import pygame.font
+import pygame as _pygame
 from pygame.math import Vector2
 import datetime
-import graphics2d.drawing as draw
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
 
 class VarContainer:
@@ -78,17 +76,17 @@ _dirty_screen_rects = []
 
 def _init():
     global clock, scene_tree
-    pygame.init()    
+    _pygame.init()    
     _honor_display_mode_settings()
-    clock = pygame.time.Clock()
+    clock = _pygame.time.Clock()
     scene_tree = SceneTree()
      
 def _get_display_flags():
     flags = 0
     if settings['RESIZABLE']:
-        flags += pygame.RESIZABLE
+        flags += _pygame.RESIZABLE
     if settings['FULLSCREEN']:
-        flags += pygame.FULLSCREEN        
+        flags += _pygame.FULLSCREEN        
     return flags    
 
 def _honor_display_mode_settings(): 
@@ -98,7 +96,7 @@ def _honor_display_mode_settings():
     if settings['FULLSCREEN']:
         width = 0
         height = 0
-    screen = pygame.display.set_mode((width, height), _get_display_flags())    
+    screen = _pygame.display.set_mode((width, height), _get_display_flags())    
     is_fullscreen = settings['FULLSCREEN']
     is_resizable = settings['RESIZABLE']
     request_redraw()
@@ -109,10 +107,10 @@ def _event_loop():
     running = True
     last = datetime.datetime.now()    
     while running:        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for event in _pygame.event.get():
+            if event.type == _pygame.QUIT:
                 running = False
-            elif event.type == pygame.VIDEORESIZE:
+            elif event.type == _pygame.VIDEORESIZE:
                 hooks['resized'](event.w, event.h)
                 request_redraw()
             else:
@@ -128,7 +126,7 @@ def _event_loop():
         if needs_redraw or settings['ALWAYS_REDRAW'] or scene_tree.has_redraw_requests():
             hooks['draw']()
             _handle_scenetree_drawing()
-            pygame.display.flip()
+            _pygame.display.flip()
             needs_redraw = False
         clock.tick(settings['MAX_FPS'])
 
@@ -157,7 +155,7 @@ def request_redraw():
     needs_redraw = True
 
 def set_window_title(title):
-    pygame.display.set_caption(title)
+    _pygame.display.set_caption(title)
 
 def get_window_size() -> Vector2:
     """
@@ -181,7 +179,7 @@ def get_runtime_in_msecs():
     """
     Returns the number of msecs this application has been running
     """
-    return pygame.time.get_ticks()
+    return _pygame.time.get_ticks()
 
 def go():
     """
@@ -198,7 +196,7 @@ def go():
             settings[name] = getattr(mod, name)
 
     _init()
-    pygame.display.set_caption("Graphics 2D Window")
+    _pygame.display.set_caption("Graphics 2D Window")
     _honor_display_mode_settings()    
     try:
         hooks['ready']()
@@ -207,6 +205,6 @@ def go():
     finally:
         # make sure we quit pygame. If we don't because an exception bypasses this, 
         # some systems may freeze until they notice we're dead.
-        pygame.quit()
+        _pygame.quit()
 
         

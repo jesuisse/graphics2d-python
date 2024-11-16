@@ -12,8 +12,8 @@ __imported_consts = (
     )
 
 # Import some constants into the local namespace
-for name in __imported_consts:
-    globals()[name] = getattr(const, name)
+for _name in __imported_consts:
+    globals()[_name] = getattr(const, _name)
 
 
 # Provide a few default colors
