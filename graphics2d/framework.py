@@ -4,14 +4,35 @@ Simplified 2D Graphics interface for teaching  (c) 2024 by Pascal Schuppli
 This is comparable to pygame zero, but provides access to more of pygame (especially surfaces) and
 a scene tree which can be used to work with graphical objects, some of which are provided to facilitate
 layouting and GUI coding.
+
+This enables students to write minimal valid graphical programs like this:
+
+from graphics2d import *
+
+WIDTH = HEIGHT = 500
+
+def draw():
+    draw_circle((250, 250), 100, RED)
+
+go()
 """
 
+__all__ = [
+    'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
+    'set_window_title'
+    ]
+
 import inspect
-import pygame
-import pygame.font
+import pygame as _pygame
+from pygame.math import Vector2
 import datetime
-import graphics2d.drawing as draw
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
+
+class VarContainer:
+    """
+    This serves as a container for quasi-global variables.
+    """
+    pass
 
 def empty_func(*args):
     pass
@@ -43,8 +64,8 @@ scene_tree = None
 screen = None
 clock = None
 needs_redraw = True
-# This leads to draw() callback being called every frame. If you turn this off via disable_auto_redraw(), you'll need to call
-# request_redraw() to have the event loop call draw().
+# This leads to draw() callback being called every frame. If you turn this off 
+# you'll need to call request_redraw() to have the event loop call draw().
 auto_redraw = True
 
 is_fullscreen=False
@@ -55,17 +76,17 @@ _dirty_screen_rects = []
 
 def _init():
     global clock, scene_tree
-    pygame.init()    
+    _pygame.init()    
     _honor_display_mode_settings()
-    clock = pygame.time.Clock()
+    clock = _pygame.time.Clock()
     scene_tree = SceneTree()
      
 def _get_display_flags():
     flags = 0
     if settings['RESIZABLE']:
-        flags += pygame.RESIZABLE
+        flags += _pygame.RESIZABLE
     if settings['FULLSCREEN']:
-        flags += pygame.FULLSCREEN        
+        flags += _pygame.FULLSCREEN        
     return flags    
 
 def _honor_display_mode_settings(): 
@@ -75,7 +96,7 @@ def _honor_display_mode_settings():
     if settings['FULLSCREEN']:
         width = 0
         height = 0
-    screen = pygame.display.set_mode((width, height), _get_display_flags())    
+    screen = _pygame.display.set_mode((width, height), _get_display_flags())    
     is_fullscreen = settings['FULLSCREEN']
     is_resizable = settings['RESIZABLE']
     request_redraw()
@@ -86,10 +107,10 @@ def _event_loop():
     running = True
     last = datetime.datetime.now()    
     while running:        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for event in _pygame.event.get():
+            if event.type == _pygame.QUIT:
                 running = False
-            elif event.type == pygame.VIDEORESIZE:
+            elif event.type == _pygame.VIDEORESIZE:
                 hooks['resized'](event.w, event.h)
                 request_redraw()
             else:
@@ -105,23 +126,29 @@ def _event_loop():
         if needs_redraw or settings['ALWAYS_REDRAW'] or scene_tree.has_redraw_requests():
             hooks['draw']()
             _handle_scenetree_drawing()
-            pygame.display.flip()
+            _pygame.display.flip()
             needs_redraw = False
         clock.tick(settings['MAX_FPS'])
 
 def _handle_scenetree_input(event):
     # TODO: Figure out how to mark an event as handled so we stop propagating it
     for item in scene_tree.depthfirst_postorder():
-        item.input(event)
+        item.on_input(event)
 
 def _handle_scenetree_updates(dt):
     for item in scene_tree.depthfirst_postorder():
-        item.update(dt)
+        item.on_update(dt)
 
 def _handle_scenetree_drawing():
     # TODO: Make sure we draw children before parents... ?
+    
+    size = Vector2(screen.get_size())
     for item in scene_tree.redraw_requests:
-        item.draw()
+        # TODO: For items with a size, we should set that as the clip size so items
+        # can't draw outside their reported size.
+        clip_size = (size.x - item.position.x, size.y - item.position.y)
+        r = Rect(item.position, clip_size)
+        item.on_draw(screen.subsurface(r))
     scene_tree.clear_redraw_requests()
     
 
@@ -134,19 +161,31 @@ def request_redraw():
     needs_redraw = True
 
 def set_window_title(title):
-    pygame.display.set_caption(title)
+    _pygame.display.set_caption(title)
 
-def get_window_size():
+def get_window_size() -> Vector2:
     """
-    Returns a tuple (width, height) containing the size of the window
+    Returns a Vector2 containing the size of the window
     """
-    return screen.get_size()
+    return Vector2(screen.get_size())
+
+def get_window_width():
+    """
+    Returns the width of the window in pixels
+    """
+    return screen.get_width()
+
+def get_window_height():
+    """
+    Returns the height of the window in pixels
+    """
+    return screen.get_height()
 
 def get_runtime_in_msecs():
     """
     Returns the number of msecs this application has been running
     """
-    return pygame.time.get_ticks()
+    return _pygame.time.get_ticks()
 
 def go():
     """
@@ -163,12 +202,15 @@ def go():
             settings[name] = getattr(mod, name)
 
     _init()
-    pygame.display.set_caption("Graphics 2D Window")
-    _honor_display_mode_settings()
-    hooks['ready']()
-    _event_loop()
-    hooks['exit']()
-    pygame.font.quit()
-    pygame.quit()
-    
+    _pygame.display.set_caption("Graphics 2D Window")
+    _honor_display_mode_settings()    
+    try:
+        hooks['ready']()
+        _event_loop()    
+        hooks['exit']()
+    finally:
+        # make sure we quit pygame. If we don't because an exception bypasses this, 
+        # some systems may freeze until they notice we're dead.
+        _pygame.quit()
+
         

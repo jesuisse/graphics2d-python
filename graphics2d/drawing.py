@@ -1,5 +1,6 @@
 import pygame.draw as draw
-import pygame.font 
+import pygame.font
+from pygame.math import Vector2
 
 font_cache = {}
 
@@ -40,7 +41,7 @@ def draw_filled_circle(surface, center, radius, color):
 def draw_text(font, text, color, antialias=True, background=None):
     return font.render(text, antialias, color, background)
 
-def get_text_size(font, text):
-    return font.size(text)
+def get_text_size(font, text) -> Vector2:
+    return Vector2(font.size(text))
 
 

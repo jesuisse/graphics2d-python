@@ -45,7 +45,7 @@ class SceneTree:
         Notifies first the item and then all it's descendants that they have entered the tree
         """
         for node in self.depthfirst_preorder(item):
-            node.enter()
+            node.on_enter()
         
     def notify_exit(self, item):
         """
@@ -53,7 +53,7 @@ class SceneTree:
         the tree
         """
         for node in self.depthfirst_postorder(item):
-            node.exit()
+            node.on_exit()
         
         
     def depthfirst_preorder(self, item: SceneItem = None):
