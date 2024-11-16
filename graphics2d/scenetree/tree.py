@@ -1,5 +1,6 @@
 import weakref
 from graphics2d.scenetree.sceneitem import SceneItem
+from graphics2d.scenetree.canvasitem import CanvasItem
 
 class SceneTree:
     """
@@ -37,15 +38,22 @@ class SceneTree:
         """
         Notifies the scene tree that one of it's items needs a redraw.
         """
-        self.redraw_requests.append(item)
+        if isinstance(item, CanvasItem):
+            self.redraw_requests.append(item)
 
+    def request_redraw_all(self, start_node):
+        for node in self.depthfirst_postorder(start_node):
+            if isinstance(node, CanvasItem):
+                self.redraw_requests.append(node)
     
     def notify_enter(self, item):
         """
         Notifies first the item and then all it's descendants that they have entered the tree
         """
         for node in self.depthfirst_preorder(item):
-            node.on_enter()
+            node.tree = weakref.ref(self)
+            node.on_enter()            
+            self.request_redraw(node)
         
     def notify_exit(self, item):
         """
@@ -54,6 +62,7 @@ class SceneTree:
         """
         for node in self.depthfirst_postorder(item):
             node.on_exit()
+            node.tree = None
         
         
     def depthfirst_preorder(self, item: SceneItem = None):

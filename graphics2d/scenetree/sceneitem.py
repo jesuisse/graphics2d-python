@@ -51,8 +51,7 @@ class SceneItem:
         if child.get_parent() != None:
             raise ValueError("The item {} already has parent {} and can't be added as a child of {}".format(child.name, child.get_parent().name, self.name))
         self.children.append(child)
-        child.parent = weakref.ref(self)
-        child.tree = weakref.ref(self.get_tree())
+        child.parent = weakref.ref(self)        
         tree = self.get_tree()
         if tree:
             tree.notify_enter(child)

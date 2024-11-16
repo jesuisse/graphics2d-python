@@ -9,7 +9,7 @@ RESIZABLE = True
 
 peach_image = None
 
-def draw():
+def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
    
     # Grösse des Grafikfensters ausfindig machen
@@ -53,7 +53,7 @@ def draw():
         draw_surface(peach_image, (450, 170))
 
 
-def ready():
+def on_ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
 
     # Lade ein Bild

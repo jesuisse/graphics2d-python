@@ -23,7 +23,7 @@ def calc_centered_position(text, fontname, fontsize):
     return (w/2-tw/2, h/2-th/2)
 
 
-def draw():
+def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
     global xpos
 
@@ -53,7 +53,7 @@ def draw():
         draw_text(font, fontsize, "Du hast geklickt!", (x, y), Color(220, 220, 0))
    
 
-def input(event):
+def on_input(event):
     # Wird aufgerufen, wenn ein Ereignis (z.B. ein Mausklick oder ein Tastendruck) vorliegt
 
     # Muss global sein, weil wir diese Namen an einen neuen Wert binden
@@ -71,13 +71,13 @@ def input(event):
         request_redraw()
             
 
-def ready():
+def on_ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist
    
     # Setze Fenstertitel
     set_window_title("Demo 2 - Mouse Motion")
     
-def resized(new_width, new_height):
+def on_resized(new_width, new_height):
     # Wird aufgerufen, wenn die Grösse des Grafikfensters verändert wird    
     print("resized window to new dimensions", new_width, new_height)
 

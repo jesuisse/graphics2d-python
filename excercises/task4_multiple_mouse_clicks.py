@@ -18,7 +18,7 @@ g = VarContainer()
 g.mouse_coords = []
 
 
-def draw():
+def on_draw():
     w, h = get_window_size()
    
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
@@ -30,13 +30,13 @@ def draw():
         draw_filled_circle(pos, 5, RED)
   
 
-def input(event):        
+def on_input(event):        
     if event.type == MOUSEBUTTONDOWN:
         g.mouse_coords.append(event.pos)
         request_redraw()
             
 
-def ready():     
+def on_ready():     
     set_window_title("Aufgabe 4.2 - Mehrere Mausklicks")
     
 

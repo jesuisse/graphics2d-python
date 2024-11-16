@@ -15,11 +15,11 @@ def closer_to_planet_than(coords, maxdist):
     dy = g.planet_position.y + size[1]/2 - coords[1]
     return dx**2 + dy**2 < maxdist**2
 
-def draw():    
+def on_draw():    
     draw_filled_rect((0, 0), get_window_size(), BLACK)
     draw_surface(g.planet, g.planet_position)
 
-def input(event):
+def on_input(event):
     if event.type == MOUSEBUTTONDOWN and event.button == 1 and closer_to_planet_than(event.pos, 125):
         g.dragging= True
     elif event.type == MOUSEBUTTONUP and event.button == 1:
@@ -42,7 +42,7 @@ def input(event):
                    
 
 
-def ready():
+def on_ready():
     set_window_title("Demo 4 - Drag and Drop")
     g.planet = load_image("resources/planet-cc0.png")
     size = g.planet.get_size()

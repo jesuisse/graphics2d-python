@@ -24,7 +24,7 @@ def calc_centered_position(text, fontname, fontsize):
     return (w/2-tw/2, h/2-th/2)
 
 
-def draw():
+def on_draw():
     w, h = get_window_size()
    
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
@@ -51,7 +51,7 @@ def draw():
         draw_text(font, fontsize, "Du hast geklickt!", (x, y), Color(220, 220, 0))
    
 
-def input(event):
+def on_input(event):
    
     if event.type == MOUSEMOTION:
         g.mouse_coords = event.pos
@@ -65,7 +65,7 @@ def input(event):
         request_redraw()
             
 
-def ready():     
+def on_ready():     
     set_window_title("Demo 2 - Mouse Motion")
     
 

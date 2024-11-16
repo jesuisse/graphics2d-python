@@ -25,7 +25,7 @@ RESIZABLE = True
 
 image = None
 
-def draw():
+def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
    
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
@@ -39,11 +39,11 @@ def draw():
         draw_circle((w/2, h/2), w/2-i*20, BLACK, width=2)
         
 
-def input(event):
+def on_input(event):
     if event.type == MOUSEBUTTONDOWN and event.button==1:
         save_screen("screenshot.png")
 
-def ready():
+def on_ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
 
     # Setze Fenstertitel

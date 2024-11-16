@@ -19,13 +19,14 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title', 'VarContainer'
+    'set_window_title', 'get_scenetree', 'VarContainer'
     ]
 
 import inspect
 import pygame as _pygame
 from pygame.math import Vector2
 import datetime
+import os.path
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
 
 class VarContainer:
@@ -39,13 +40,25 @@ def empty_func(*args):
 
 # callback functions which will be called if defined in the importing python module
 hooks = {
-    'draw': empty_func,
-    'update': empty_func,
-    'input': empty_func,
-    'ready': empty_func,
-    'exit': empty_func,
-    'resized': empty_func
+    'on_draw': empty_func,
+    'on_update': empty_func,
+    'on_input': empty_func,
+    'on_ready': empty_func,
+    'on_exit': empty_func,
+    'on_resized': empty_func
 }
+
+# TODO: we can get rid of this in a few months - only there to support the first batch of
+# students who started learning with the initial hook names. It maps old names to new ones.
+# - Nov 24
+compat_hooks = {
+    'draw': 'on_draw',
+    'update': 'on_update',
+    'input': 'on_input',
+    'ready': 'on_ready',
+    'exit': 'on_exit',
+    'resized': 'on_resized'
+    }
 
 _icon_already_set = False
 
@@ -66,26 +79,25 @@ scene_tree = None
 screen = None
 clock = None
 needs_redraw = True
-# This leads to draw() callback being called every frame. If you turn this off 
-# you'll need to call request_redraw() to have the event loop call draw().
 auto_redraw = True
-
 is_fullscreen=False
 is_resizable=False
 
 _dirty_screen_rects = []
 
-
 def _init():
     global clock, scene_tree
     _pygame.init()
-    icon = _pygame.image.load("resources/icon.png")
+    icon = _pygame.image.load(os.path.join(_get_internal_asset_path(), "icon.png"))
     if not _icon_already_set:
         _pygame.display.set_icon(icon)
     _honor_display_mode_settings()
     clock = _pygame.time.Clock()
     scene_tree = SceneTree()
-     
+
+def _get_internal_asset_path():
+    return os.path.join(os.path.dirname(__file__), "assets")
+
 def _get_display_flags():
     flags = 0
     if settings['RESIZABLE']:
@@ -116,20 +128,21 @@ def _event_loop():
             if event.type == _pygame.QUIT:
                 running = False
             elif event.type == _pygame.VIDEORESIZE:
-                hooks['resized'](event.w, event.h)
+                hooks['on_resized'](event.w, event.h)
+                scene_tree.request_redraw_all(scene_tree.root)
                 request_redraw()
             else:
                 _handle_scenetree_input(event)
-                hooks['input'](event)                
+                hooks['on_input'](event)                
                 
         now = datetime.datetime.now()
         dt = now-last
         last = now
         msecs = dt.seconds * 1000 + (dt.microseconds / 1000)
-        hooks['update'](msecs)
+        hooks['on_update'](msecs)
         _handle_scenetree_updates(msecs)
         if needs_redraw or settings['ALWAYS_REDRAW'] or scene_tree.has_redraw_requests():
-            hooks['draw']()
+            hooks['on_draw']()
             _handle_scenetree_drawing()
             _pygame.display.flip()
             needs_redraw = False
@@ -138,11 +151,13 @@ def _event_loop():
 def _handle_scenetree_input(event):
     # TODO: Figure out how to mark an event as handled so we stop propagating it
     for item in scene_tree.depthfirst_postorder():
-        item.on_input(event)
+        if hasattr(item, 'on_input'):
+            item.on_input(event)
 
 def _handle_scenetree_updates(dt):
     for item in scene_tree.depthfirst_postorder():
-        item.on_update(dt)
+        if hasattr(item, 'on_update'):
+            item.on_update(dt)
 
 def _handle_scenetree_drawing():
     # TODO: Make sure we draw children before parents... ?
@@ -152,10 +167,13 @@ def _handle_scenetree_drawing():
         # TODO: For items with a size, we should set that as the clip size so items
         # can't draw outside their reported size.
         clip_size = (size.x - item.position.x, size.y - item.position.y)
-        r = Rect(item.position, clip_size)
+        r = _pygame.Rect(item.position, clip_size)
+        # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
+        # the CanvasItem drawing API cleaner (no need to pass in a surface)
+        item._draw_surface = screen.subsurface(r)
         item.on_draw(screen.subsurface(r))
+        item._draw_surface = None
     scene_tree.clear_redraw_requests()
-    
 
 def request_redraw():
     """
@@ -197,6 +215,9 @@ def get_runtime_in_msecs():
     """
     return _pygame.time.get_ticks()
 
+def get_scenetree():
+    return scene_tree
+
 def go():
     """
     Configures pygame and starts the event loop
@@ -207,17 +228,23 @@ def go():
     for name in hooks.keys():
         if name in g:
             hooks[name] = getattr(mod, name)
+
     for name in settings.keys():
         if name in g:
             settings[name] = getattr(mod, name)
+
+    # only here for backwards compatibility - see note for compat_hooks!
+    for name in compat_hooks.keys():
+        if name in g:
+            hooks[compat_hooks[name]] = getattr(mod, name)
 
     _init()
     _pygame.display.set_caption("Graphics 2D Window")
     _honor_display_mode_settings()    
     try:
-        hooks['ready']()
+        hooks['on_ready']()
         _event_loop()    
-        hooks['exit']()
+        hooks['on_exit']()
     finally:
         # make sure we quit pygame. If we don't because an exception bypasses this, 
         # some systems may freeze until they notice we're dead.

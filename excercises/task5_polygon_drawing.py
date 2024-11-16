@@ -19,7 +19,7 @@ g.active_polygon_points = []
 g.finished_polygons = []
 
 
-def draw():
+def on_draw():
     w, h = get_window_size()
    
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
@@ -49,7 +49,7 @@ def is_closer_than(a, b, distance):
     # Pythagoras
     return (a[0]-b[0])**2 + (a[1]-b[1])**2 < distance**2
 
-def input(event):        
+def on_input(event):        
     if event.type == MOUSEBUTTONDOWN:        
         if len(g.active_polygon_points) > 0 and is_closer_than(g.active_polygon_points[0], event.pos, 5):
             # Wir haben ein fertiges Polygon
@@ -60,7 +60,7 @@ def input(event):
         request_redraw()
             
 
-def ready():     
+def on_ready():     
     set_window_title("Aufgabe 5 - Polygone zeichnen")
     
 

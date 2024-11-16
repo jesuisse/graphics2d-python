@@ -16,7 +16,7 @@ RESIZABLE = True
 
 image = None
 
-def draw():
+def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
    
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
@@ -37,7 +37,7 @@ def draw():
         draw_surface(image, (w/2-64,400))
 
 
-def ready():
+def on_ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
     
     global image

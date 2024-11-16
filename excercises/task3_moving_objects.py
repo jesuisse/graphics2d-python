@@ -25,7 +25,7 @@ kreis1 = [0, 0]
 kreis2 = [0, 0]
 kreis3 = [0, 0]
 
-def draw():
+def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
    
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
@@ -38,7 +38,7 @@ def draw():
     draw_filled_circle(kreis2, 12, BLUE)
     draw_filled_circle(kreis3, 15, RED)
     
-def update(dt):
+def on_update(dt):
     w, h = get_window_size()
     
     # Kreis 1: Horizontale Kreisbewegung
@@ -64,11 +64,11 @@ def update(dt):
     request_redraw()
  
 
-def input(event):
+def on_input(event):
     if event.type == MOUSEBUTTONDOWN and event.button==1:
         save_screen("screenshot.png")
 
-def ready():
+def on_ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
 
     # Setze Fenstertitel
