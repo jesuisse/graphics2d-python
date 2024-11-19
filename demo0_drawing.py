@@ -59,7 +59,7 @@ def on_ready():
     # Lade ein Bild
     global peach_image
     try:
-        peach_image = load_image("resources/peach-icon1.png")
+        peach_image = load_image("graphics2d/assets/peach-icon1.png")
     except FileNotFoundError:
         print("Bilddatei nicht gefunden...")
 
