@@ -12,7 +12,7 @@ class CanvasItem(SceneItem):
     """
 
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         
         if 'name' in kwargs:
             self.name = kwargs['name']
@@ -90,3 +90,13 @@ class CanvasItem(SceneItem):
         return Vector2(font.size(text))
 
 
+class CanvasRectAreaItem(CanvasItem):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.size = Vector2(0, 0)
+        if 'size' in kwargs:
+            size = kwargs['size']
+            if isinstance(size, Vector2):
+                self.size = size
+            else:
+                self.size = Vector2(size)

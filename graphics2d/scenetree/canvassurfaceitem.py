@@ -1,13 +1,13 @@
-from graphics2d.scenetree.canvasitem import CanvasItem
+from graphics2d.scenetree.canvasitem import CanvasItem, CanvasRectAreaItem
 from pygame.math import Vector2
 
-class CanvasSurfaceItem(CanvasItem):
+class CanvasSurfaceItem(CanvasRectAreaItem):
     """
     This is a canvas item which is backed by a pygame surface.
     """
        
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self.surface = None
         self.size = Vector2(0, 0)
         

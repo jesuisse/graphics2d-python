@@ -27,28 +27,28 @@ HEIGHT = 500
 
 
 
-def draw():
+def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
     pass
 
-def update(dt):
+def on_update(dt):
     # Wird so oft wie möglich aufgerufen, aber maximal MAX_FPS mal pro Sekunde. dt gibt die Anzahl Millisekunden seit
     # dem letzten Aufruf an.    
     pass
 
-def input(event):    
+def on_input(event):    
     # Wird aufgerufen, wenn ein Ereignis (z.B. ein Mausklick oder ein Tastendruck) vorliegt
     pass    
 
-def ready():
+def on_ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
     set_window_title("Langweiliges schwarzes Fenster")
 
-def resized(new_width, new_height):
+def on_resized(new_width, new_height):
     # Wird aufgerufen, wenn die Grösse des Grafikfensters verändert wird
     pass
 
-def exit():
+def on_exit():
     # Wird aufgerufen, bevor die Applikation beendet wird.
     pass
 
