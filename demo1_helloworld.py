@@ -29,12 +29,13 @@ def on_draw():
     font = get_default_fontname()
     fontsize = 50
     tw, th = get_text_size(font, fontsize, text)
-    pos = (w/2-tw/2, h/2-th/2)
+    pos = (w/2-tw/2, h/4-th/2)
     draw_text(font, fontsize, text, pos, Color(200, 200, 200))
     
     # Zeichnet das geladene Baum-Bild auf den Bildschirm
     if image:
-        draw_surface(image, (w/2-64,400))
+        iw, ih = image.get_size()
+        draw_surface(image, (w/2-iw/3,h-ih))
 
 
 def on_ready():
@@ -46,7 +47,7 @@ def on_ready():
     set_window_title("Demo 1")
     # Versuche eine Grafik zu laden, aber nicht verzweifeln, wenn sie nicht da ist...
     try:
-        image = load_image("resources/tree5.png")
+        image = load_image("resources/tree.png")
     except FileNotFoundError:
         print("Could not find image, going on without it...")
 
