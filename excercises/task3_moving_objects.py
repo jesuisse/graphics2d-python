@@ -1,6 +1,5 @@
-import sys
-sys.path.append("..")
-
+import os, os.path, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from graphics2d import *
 
 
@@ -38,6 +37,7 @@ def on_draw():
     draw_filled_circle(kreis2, 12, BLUE)
     draw_filled_circle(kreis3, 15, RED)
     
+
 def on_update(dt):
     w, h = get_window_size()
     
