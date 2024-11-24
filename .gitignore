@@ -1,4 +1,6 @@
 .vscode
+build/**
+dist/**
 __pycache__
 __pycache__/*
 graphics2d/__pycache__/*

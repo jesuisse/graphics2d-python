@@ -1,3 +1,6 @@
+import sys, os.path
+sys.path.append(os.path.join(sys.path[0], ".."))
+
 from graphics2d import *
 
 WIDTH = 700
@@ -15,7 +18,7 @@ def closer_to_planet_than(coords, maxdist):
     dy = g.planet_position.y + size[1]/2 - coords[1]
     return dx**2 + dy**2 < maxdist**2
 
-def on_draw():    
+def on_draw():
     draw_filled_rect((0, 0), get_window_size(), BLACK)
     draw_surface(g.planet, g.planet_position)
 
@@ -24,10 +27,10 @@ def on_input(event):
         g.dragging= True
     elif event.type == MOUSEBUTTONUP and event.button == 1:
         g.dragging = False
-    
+
     if g.dragging and event.type == MOUSEMOTION:
         g.planet_position += Vector2(event.rel)
-        
+
         # Sorgt dafür, dass wir den Planeten nicht aus dem Fenster schieben können
         w, h = get_window_size()
         pw, ph = g.planet.get_size()
@@ -39,7 +42,7 @@ def on_input(event):
             g.planet_position.y = -ph/2
         elif g.planet_position.y > h-ph/2:
             g.planet_position.y = h-ph/2
-                   
+
 
 
 def on_ready():

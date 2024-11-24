@@ -10,16 +10,17 @@ class SceneTree:
     def __init__(self, **kwargs):
         self.root = None
         self.redraw_requests = []
-        
+
     def __del__(self):
-        self.clear_tree()        
+        self.clear_tree()
 
     def set_root(self, root : SceneItem):
         assert(root.get_tree() is None)
         self.root = root
         root.tree = weakref.ref(self)
         self.notify_enter(root)
-        
+
+
     def clear_tree(self):
         """
         This removes the tree root item.
@@ -45,16 +46,20 @@ class SceneTree:
         for node in self.depthfirst_postorder(start_node):
             if isinstance(node, CanvasItem):
                 self.redraw_requests.append(node)
-    
+
     def notify_enter(self, item):
         """
         Notifies first the item and then all it's descendants that they have entered the tree
         """
         for node in self.depthfirst_preorder(item):
             node.tree = weakref.ref(self)
-            node.on_enter()            
+            node.on_enter()
             self.request_redraw(node)
-        
+            parent = node.get_parent()
+            if parent:
+                parent.on_child_entered(node)
+
+
     def notify_exit(self, item):
         """
         Notifies first the descendants (depth-first) and then the item that they are about to leave
@@ -63,8 +68,8 @@ class SceneTree:
         for node in self.depthfirst_postorder(item):
             node.on_exit()
             node.tree = None
-        
-        
+
+
     def depthfirst_preorder(self, item: SceneItem = None):
         """
         Generator which yields elements in depth first preorder
@@ -76,7 +81,7 @@ class SceneTree:
         yield item
         for child in item.children:
             yield from self.depthfirst_preorder(child)
-    
+
     def depthfirst_postorder(self, item: SceneItem = None):
         """
         Generator which yields elements in depth first postorder
@@ -88,4 +93,26 @@ class SceneTree:
         for child in reversed(item.children):
             yield from self.depthfirst_postorder(child)
         yield item
+
+    def canvasitem_roots(self, item: SceneItem = None):
+        """
+        Generator which yields all the canvasitem roots.
+
+        There can be multiple roots when, for example, the scene
+        tree root is not a canvasitem, but has some as children.
+        """
+        if item is None:
+            if self.root == None:
+                return
+            item = self.root
+
+        if isinstance(item, CanvasItem):
+            yield item
+            return
+        else:
+            for child in reversed(item.children):
+                yield from self.canvasitem_roots(child)
+
+
+
 

@@ -27,7 +27,7 @@ import pygame as _pygame
 from pygame.math import Vector2
 import datetime
 import os.path
-from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem
+from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem
 
 class VarContainer:
     """
@@ -60,6 +60,7 @@ compat_hooks = {
     'resized': 'on_resized'
     }
 
+_calling_module = None
 _icon_already_set = False
 
 # global constants which will be picked up from the importing python module and used to
@@ -103,17 +104,17 @@ def _get_display_flags():
     if settings['RESIZABLE']:
         flags += _pygame.RESIZABLE
     if settings['FULLSCREEN']:
-        flags += _pygame.FULLSCREEN        
-    return flags    
+        flags += _pygame.FULLSCREEN
+    return flags
 
-def _honor_display_mode_settings(): 
+def _honor_display_mode_settings():
     global is_fullscreen, is_resizable, screen
     width = settings['WIDTH']
     height = settings['HEIGHT']
     if settings['FULLSCREEN']:
         width = 0
         height = 0
-    screen = _pygame.display.set_mode((width, height), _get_display_flags())    
+    screen = _pygame.display.set_mode((width, height), _get_display_flags())
     is_fullscreen = settings['FULLSCREEN']
     is_resizable = settings['RESIZABLE']
     request_redraw()
@@ -122,19 +123,27 @@ def _honor_display_mode_settings():
 def _event_loop():
     global needs_redraw
     running = True
-    last = datetime.datetime.now()    
-    while running:        
+    last = datetime.datetime.now()
+    while running:
         for event in _pygame.event.get():
             if event.type == _pygame.QUIT:
                 running = False
             elif event.type == _pygame.VIDEORESIZE:
+                # set window size 'constants' to behave as people expect
+                # (tested; keeping these at the original values confuses people)
+                if _calling_module:
+                    setattr(_calling_module, 'WIDTH', event.w)
+                    setattr(_calling_module, 'HEIGHT', event.h)
                 hooks['on_resized'](event.w, event.h)
+                _handle_scenetree_resize(event.w, event.h)
                 scene_tree.request_redraw_all(scene_tree.root)
+                # TODO: BUG, remove this!!!
+                screen.fill(_pygame.Color(0, 0, 0))
                 request_redraw()
             else:
                 _handle_scenetree_input(event)
-                hooks['on_input'](event)                
-                
+                hooks['on_input'](event)
+
         now = datetime.datetime.now()
         dt = now-last
         last = now
@@ -151,33 +160,44 @@ def _event_loop():
 def _handle_scenetree_input(event):
     # TODO: Figure out how to mark an event as handled so we stop propagating it
     for item in scene_tree.depthfirst_postorder():
-        if hasattr(item, 'on_input'):
-            item.on_input(event)
+        # should we only do this for CanvasItems?
+        item.on_input(event)
 
 def _handle_scenetree_updates(dt):
     for item in scene_tree.depthfirst_postorder():
-        if hasattr(item, 'on_update'):
-            item.on_update(dt)
+        # Should we only do this for CanvasItems?
+        item.on_update(dt)
+
+def _handle_scenetree_resize(new_width, new_height):
+    root = scene_tree.root
+    if root:
+        # Should we only do this for CanvasItems?
+        root.on_resized(new_width, new_height)
 
 def _handle_scenetree_drawing():
     # TODO: Make sure we draw children before parents... ?
-    
+
     size = Vector2(screen.get_size())
     for item in scene_tree.redraw_requests:
-        # TODO: For items with a size, we should set that as the clip size so items
-        # can't draw outside their reported size.
-        clip_size = (size.x - item.position.x, size.y - item.position.y)
+        if isinstance(item, CanvasRectAreaItem):
+            if item.position[0] > size[0] or item.position[1] > size[1] or item.position[0] + item.size[0] < 0 or item.position[1] + item.size[1] < 0:
+                # don't bother drawing as the item is outside the visible area
+                continue
+            clip_size = (max(0, min(item.size[0], size.x-item.position.x)), max(0, min(item.size[1], size.y-item.position.y)))
+        else:
+            clip_size = (max(0, size.x - item.position.x), max(0, size.y - item.position.y))
         r = _pygame.Rect(item.position, clip_size)
         # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
         # the CanvasItem drawing API cleaner (no need to pass in a surface)
-        item._draw_surface = screen.subsurface(r)
-        item.on_draw(screen.subsurface(r))
+        subsurface = screen.subsurface(r)
+        item._draw_surface = subsurface
+        item.on_draw(subsurface)
         item._draw_surface = None
     scene_tree.clear_redraw_requests()
 
 def request_redraw():
     """
-    request a visual update. If AUTO_REDRAW is false, this must be called for changes to 
+    request a visual update. If AUTO_REDRAW is false, this must be called for changes to
     become visible.
     """
     global needs_redraw
@@ -185,7 +205,7 @@ def request_redraw():
 
 def set_window_title(title):
     _pygame.display.set_caption(title)
-    
+
 def set_window_icon(icon_surface):
     global _icon_already_set
     _icon_already_set = True
@@ -222,8 +242,10 @@ def go():
     """
     Configures pygame and starts the event loop
     """
+    global _calling_module
     frm = inspect.stack()[1]
     mod = inspect.getmodule(frm[0])
+    _calling_module = mod
     g = dir(mod)
     for name in hooks.keys():
         if name in g:
@@ -240,14 +262,14 @@ def go():
 
     _init()
     _pygame.display.set_caption("Graphics 2D Window")
-    _honor_display_mode_settings()    
+    _honor_display_mode_settings()
     try:
         hooks['on_ready']()
-        _event_loop()    
+        _event_loop()
         hooks['on_exit']()
     finally:
-        # make sure we quit pygame. If we don't because an exception bypasses this, 
+        # make sure we quit pygame. If we don't because an exception bypasses this,
         # some systems may freeze until they notice we're dead.
         _pygame.quit()
 
-        
+

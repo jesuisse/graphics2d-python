@@ -7,7 +7,8 @@ Programme verwenden.
 
 from graphics2d import *
 
-# Diese Konstanten legen die Grösse des Grafikfensters fest
+# Diese 'magischen Konstanten' legen die Grösse des Grafikfensters fest. Sie werden beim Verändern der Fenstergrösse
+# automagisch an die neue Grösse angepasst.
 WIDTH = 500
 HEIGHT = 500
 
@@ -33,15 +34,15 @@ def on_draw():
 
 def on_update(dt):
     # Wird so oft wie möglich aufgerufen, aber maximal MAX_FPS mal pro Sekunde. dt gibt die Anzahl Millisekunden seit
-    # dem letzten Aufruf an.    
+    # dem letzten Aufruf an.
     pass
 
-def on_input(event):    
+def on_input(event):
     # Wird aufgerufen, wenn ein Ereignis (z.B. ein Mausklick oder ein Tastendruck) vorliegt
-    pass    
+    pass
 
 def on_ready():
-    # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
+    # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.
     set_window_title("Langweiliges schwarzes Fenster")
 
 def on_resized(new_width, new_height):
