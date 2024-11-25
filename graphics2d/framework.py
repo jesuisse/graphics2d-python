@@ -93,6 +93,8 @@ def _init():
     if not _icon_already_set:
         _pygame.display.set_icon(icon)
     _honor_display_mode_settings()
+    if not _icon_already_set:
+        _pygame.display.set_icon(icon)
     clock = _pygame.time.Clock()
     scene_tree = SceneTree()
 
