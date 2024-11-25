@@ -33,7 +33,9 @@ class CanvasItem(SceneItem):
         """
         Call this to notify the SceneTree that this SceneItem needs to redraw itself.
         """
-        self.get_tree().request_redraw(self)
+        tree = self.get_tree()
+        if tree:
+            tree.request_redraw(self)
 
 
     def on_ready(self):

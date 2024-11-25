@@ -138,7 +138,6 @@ def _event_loop():
                     setattr(_calling_module, 'HEIGHT', event.h)
                 hooks['on_resized'](event.w, event.h)
                 _handle_scenetree_resize(event.w, event.h)
-                scene_tree.request_redraw_all(scene_tree.root)
                 # TODO: BUG, remove this!!!
                 screen.fill(_pygame.Color(0, 0, 0))
                 request_redraw()

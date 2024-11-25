@@ -199,7 +199,6 @@ class BoxContainer(CanvasContainer):
         for i, child in enumerate(self.children):
             if not isinstance(child, CanvasRectAreaItem):
                 continue
-            #child.size[orientation] = calc_sizes[i][orientation]
             child.position[orientation] = pos
             pos += calc_sizes[i][orientation] + separation_gap
 
@@ -208,7 +207,8 @@ class BoxContainer(CanvasContainer):
             # notify child that it has a new size.
             child.on_resized(calc_sizes[i][0], calc_sizes[i][1])
             # might not work because we're not in the tree yet, possibly...
-            #child.request_redraw()
+            if self.get_tree():
+             child.request_redraw()
 
             #print(child.name, child.position, child.size)
 

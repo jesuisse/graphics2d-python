@@ -113,6 +113,21 @@ class SceneTree:
             for child in reversed(item.children):
                 yield from self.canvasitem_roots(child)
 
-
-
-
+    def container_roots(self, item: SceneItem = None):
+        """
+        yields CanvasContainer roots in preorder and CanvasItems
+        in reverse depthfirst order.
+        """
+        if item is None:
+            if self.root == None:
+                return
+            item = self.root
+        
+        if isinstance(item, CanvasContainer):
+            yield item
+        else:
+            for child in reversed(item.children):
+                yield from self.container_roots(child)
+            if isinstance(item, CanvasItem):
+                yield item
+    
