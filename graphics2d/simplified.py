@@ -106,4 +106,4 @@ def load_image(filename):
     return surface
 
 def save_screen(filename):
-    _pygame.image.save(framework.screen, filename)
+    _pygame.image.save(_framework.screen, filename)

@@ -1,7 +1,6 @@
 import sys, os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-
 from graphics2d import *
 
 # Diese Konstanten legen die Grösse des Grafikfensters fest

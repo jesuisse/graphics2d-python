@@ -1,4 +1,4 @@
-import sys, os, os.path
+import os, os.path, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from graphics2d import *

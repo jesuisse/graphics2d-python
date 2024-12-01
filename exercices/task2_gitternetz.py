@@ -1,5 +1,5 @@
-import sys
-sys.path.append("..")
+import os, os.path, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from graphics2d import *
 
@@ -40,13 +40,10 @@ def on_draw():
     
     for x in range(1, count):
         draw_line((x*STEP, 0), (x*STEP, h), BLACK, 1)
-    for y in range(count):
+    for y in range(1, count):
         draw_line((0, y*STEP), (w, y*STEP), BLACK, 1)
         
 
-def on_input(event):
-    if event.type == MOUSEBUTTONDOWN and event.button==1:
-        save_screen("screenshot.png")
 
 def on_ready():
     # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    

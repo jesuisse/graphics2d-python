@@ -50,7 +50,6 @@ class CanvasItem(SceneItem):
         else:
             return node.position
 
-
     def on_ready(self):
         pass
 
