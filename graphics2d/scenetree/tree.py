@@ -9,7 +9,7 @@ class SceneTree:
 
     def __init__(self, **kwargs):
         self.root = None
-        self.redraw_requests = []
+        self.redraw_requests = {}
 
     def __del__(self):
         self.clear_tree()
@@ -28,6 +28,8 @@ class SceneTree:
         if self.root:
             self.notify_exit(self.root)
         self.root = None
+        self.clear_redraw_requests()
+
 
     def has_redraw_requests(self):
         return len(self.redraw_requests) > 0
@@ -40,12 +42,15 @@ class SceneTree:
         Notifies the scene tree that one of it's items needs a redraw.
         """
         if isinstance(item, CanvasItem):
-            self.redraw_requests.append(item)
+            self.redraw_requests[item] = True
 
     def request_redraw_all(self, start_node):
+        """
+        This requests that the whole tree starting with start_node be redrawn
+        """
         for node in self.depthfirst_postorder(start_node):
             if isinstance(node, CanvasItem):
-                self.redraw_requests.append(node)
+                self.redraw_requests[node] = True
 
     def notify_enter(self, item):
         """

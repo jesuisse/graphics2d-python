@@ -33,7 +33,22 @@ class CanvasItem(SceneItem):
         """
         Call this to notify the SceneTree that this SceneItem needs to redraw itself.
         """
-        self.get_tree().request_redraw(self)
+        tree = self.get_tree()
+        if tree:
+            tree.request_redraw(self)
+
+    def get_viewport_position(self):
+        """
+        Returns the position of this item relative to the top left corner of the viewport
+        """
+        return self._get_viewport_position(self)
+
+    def _get_viewport_position(self, node):
+        parent = node.parent() if node.parent else None
+        if parent:
+            return node.position + self._get_viewport_position(parent)
+        else:
+            return node.position
 
 
     def on_ready(self):

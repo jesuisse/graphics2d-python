@@ -28,7 +28,6 @@ class CanvasContainer(CanvasRectAreaItem):
         self.request_redraw()
 
     def on_child_entered(self, node):
-        print("Child {} entered tree".format(node.name))
         self.layout()
         self.request_redraw()
 
@@ -112,12 +111,16 @@ class BoxContainer(CanvasContainer):
         """
         min_primary_total = 0
         max_secondary = 0
+        visible = 0
         for child in self.children:
+            if not isinstance(child, CanvasRectAreaItem):
+                continue
+            visible += 1
             csize = child.get_min_size()
             min_primary_total += csize[self.orientation]
             max_secondary = max(max_secondary, csize[1-self.orientation])
         size = [0, 0]
-        size[self.orientation] = min_primary_total
+        size[self.orientation] = min_primary_total + self.separation * (visible-1)
         size[1-self.orientation] = max_secondary
         return tuple(size)
 
@@ -152,15 +155,16 @@ class BoxContainer(CanvasContainer):
                 max_total += maxsize
             weights += weight
 
-        # now figure out how much leftover space we have if all children are minimized
-        leftover = self.size[orientation] #- min_total
-        if not unconstrained and self.size[orientation] - max_total > 0:
+        # now figure out how much leftover space we have
+        leftover = self.size[orientation]
+        if not unconstrained and leftover - max_total - (self.separation)*(visible_count-1) > 0:
             # all children are maxed out and we have space availabe. Calc separator
-            separation_gap = (self.size[orientation] - max_total) / (visible_count-1)
+            separation_gap = self.separation + (leftover - max_total) / (visible_count-1)
         else:
-            separation_gap = 0
+            separation_gap = self.separation
 
         # pass 2: calculate the sizes of all the children who are maximum-constrained
+        leftover -= separation_gap * (visible_count-1)
         i = -1
         for child in self.children:
             if not isinstance(child, CanvasRectAreaItem):
@@ -246,5 +250,93 @@ class HBoxContainer(BoxContainer):
         super().__init__(**kwargs)
         self.orientation = self.HORIZONTAL
 
+class PanelContainer(CanvasContainer):
+    """
+    PanelContainer contains a single child. It provides the child with a margin, border and background.
 
+    The margin separates this item its parent; it is immediately followed by the border, and
+    the content CanvasItem is placed *inside* the border, on top of the given background. The background
+    does not fill the margins.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # left, right, top, bottom
+        self.borders = (0, 0, 0, 0)
+        self.margins = (0, 0, 0, 0)
+        self.bg_color = None
+
+        if 'margins' in kwargs:
+            self.margins = self._interpret_size_parameter(kwargs['margins'])
+        if 'borders' in kwargs:
+            self.borders = self._interpret_size_parameter(kwargs['borders'])
+        if 'bg_color' in kwargs:
+            self.bg_color = kwargs['bg_color']
+
+    def _interpret_size_parameter(self, seq):
+        if type(seq) is list or type(seq) is tuple:
+            if len(seq) == 4:
+                return tuple(seq)
+            elif len(seq) == 2:
+                return tuple([seq[0], seq[0], seq[1], seq[1]])
+        elif type(seq) is float or type(seq) is int:
+            return tuple([seq, seq, seq, seq])
+        else:
+            raise ValueError("expected either a single number for all 4 sides, a sequence of (left, right, top, bottom) or (left/right, top/bottom) sizes")
+
+    def get_content_min_size(self):
+        i = 0
+        child = None
+        # Find first usable child. We don't layout any other children even if there are more.
+        while i < len(self.children):
+            child = self.children[i]
+            i += 1
+            if isinstance(child, CanvasRectAreaItem):
+                break
+
+        min_width = self.margins[0] + self.margins[1] + self.borders[0] + self.borders[1]
+        min_height = self.margins[2] + self.margins[3] + self.borders[2] + self.borders[3]
+
+        if child:
+            ms = child.get_min_size()
+            return tuple([ms[0]+min_width, ms[1]+min_height])
+        else:
+            return tuple([min_width, min_height])
+
+
+    def layout(self):
+        i = 0
+        child = None
+        # Find first usable child. We don't layout any other children even if there are more.
+        while i < len(self.children):
+            child = self.children[i]
+            i += 1
+            if isinstance(child, CanvasRectAreaItem):
+                break
+        if child is None:
+            return
+
+
+        child.position[0] = self.margins[0] + self.borders[0]
+        child.position[1] = self.margins[2] + self.borders[2]
+
+        min_width = self.margins[0] + self.margins[1] + self.borders[0] + self.borders[1]
+        min_height = self.margins[2] + self.margins[3] + self.borders[2] + self.borders[3]
+
+        width = self.size[0] - min_width
+        height = self.size[1] - min_height
+
+        min_size = self.get_content_min_size()
+        max_size = child.get_max_size()
+
+        width = max(min_size[0], min(width, max_size[0]) if max_size[0] is not None else width)
+        height = max(min_size[1], min(height, max_size[1]) if max_size[0] is not None else height)
+
+        child.on_resized(width, height)
+
+
+    def on_draw(self, draw_surface):
+        w = self.size[0] - self.margins[0] - self.margins[1]
+        h = self.size[1] - self.margins[2] - self.margins[3]
+        if self.bg_color:
+            self.draw_filled_rect(Rect(self.margins[0], self.margins[2], w, h), self.bg_color)
 

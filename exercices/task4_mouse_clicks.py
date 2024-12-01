@@ -1,5 +1,5 @@
-import sys
-sys.path.append("..")
+import sys, os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from graphics2d import *
 
@@ -21,25 +21,25 @@ g.mouse_coords = None
 
 def on_draw():
     w, h = get_window_size()
-   
+
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
     background_color = Color(30, 30, 50)
     draw_filled_rect((0, 0), (w, h), background_color)
-      
+
     # Zeichnet zentrierten Text in die Mitte des Fensters
     if g.mouse_coords:
         draw_filled_circle(g.mouse_coords, 5, RED)
-  
 
-def on_input(event):        
+
+def on_input(event):
     if event.type == MOUSEBUTTONDOWN:
-        g.mouse_coords = event.pos        
+        g.mouse_coords = event.pos
         request_redraw()
-            
 
-def on_ready():     
+
+def on_ready():
     set_window_title("Aufgabe 4.1 - Mausklicks")
-    
+
 
 # Startet das Grafikprogramm.
 go()

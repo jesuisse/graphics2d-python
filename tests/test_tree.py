@@ -1,7 +1,10 @@
+import sys, os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 from graphics2d import *
 from graphics2d.scenetree.sceneitem import SceneItem
 from graphics2d.scenetree.canvasitem import CanvasItem, CanvasColorRect
-from graphics2d.scenetree.canvascontainer import BoxContainer
+from graphics2d.scenetree.canvascontainer import BoxContainer, PanelContainer
 
 WIDTH = 700
 HEIGHT = 700
@@ -19,10 +22,14 @@ class CanvasTest(CanvasItem):
 
 def on_ready():
     tree = get_scenetree()
-    #root = SceneItem(name="root")
-    root = BoxContainer(name="root")
+
+    root = PanelContainer(name="root", bg_color=MAGENTA)
     root.size = Vector2(WIDTH, HEIGHT)
-    #background = CanvasTest(name="background")
+
+    panel = PanelContainer(name="panel", bg_color=Color(30, 30, 30), margins=5)
+
+    box = BoxContainer(name="box", separation=5)
+
     red = CanvasColorRect(name="red_rect", color=RED,
         weight_ratio=2,
         min_size=(50, 50), max_size=(300, 200), flags=CanvasColorRect.ALIGN_END)
@@ -30,9 +37,12 @@ def on_ready():
         min_size=(20, 50))
     yellow = CanvasColorRect(name="yellow_rect", color=YELLOW,
         min_size=(20, 50), max_size=(200, 300), flags=CanvasColorRect.ALIGN_CENTERED)
-    root.add_child(red)
-    root.add_child(blue)
-    root.add_child(yellow)
+
+    panel.add_child(box)
+    box.add_child(red)
+    box.add_child(blue)
+    box.add_child(yellow)
+    root.add_child(panel)
     tree.set_root(root)
     set_window_title("SceneTree Test")
 

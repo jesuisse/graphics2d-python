@@ -1,5 +1,5 @@
-import sys
-sys.path.append("..")
+import sys, os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from graphics2d.scenetree import SceneTree, SceneItem
 
@@ -14,6 +14,6 @@ root.children[1].add_child(SceneItem(name="child of second"))
 
 for node in t.depthfirst_postorder(root):
     print(node.name)
-    
+
 
 

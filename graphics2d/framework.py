@@ -29,6 +29,7 @@ import datetime
 import os.path
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem
 
+
 class VarContainer:
     """
     This serves as a container for quasi-global variables.
@@ -137,8 +138,6 @@ def _event_loop():
                 hooks['on_resized'](event.w, event.h)
                 _handle_scenetree_resize(event.w, event.h)
                 scene_tree.request_redraw_all(scene_tree.root)
-                # TODO: BUG, remove this!!!
-                screen.fill(_pygame.Color(0, 0, 0))
                 request_redraw()
             else:
                 _handle_scenetree_input(event)
@@ -175,25 +174,52 @@ def _handle_scenetree_resize(new_width, new_height):
         root.on_resized(new_width, new_height)
 
 def _handle_scenetree_drawing():
-    # TODO: Make sure we draw children before parents... ?
-
     size = Vector2(screen.get_size())
-    for item in scene_tree.redraw_requests:
-        if isinstance(item, CanvasRectAreaItem):
-            if item.position[0] > size[0] or item.position[1] > size[1] or item.position[0] + item.size[0] < 0 or item.position[1] + item.size[1] < 0:
+
+    for item in scene_tree.depthfirst_preorder():
+        p = item.get_viewport_position()
+        if item not in scene_tree.redraw_requests or not isinstance(item, CanvasItem):
+            # either an item with no visual represenatation or no redraw request for this item
+            continue
+        elif isinstance(item, CanvasRectAreaItem):
+            if p[0] > size[0] or p[1] > size[1] or p[0] + item.size[0] < 0 or p[1] + item.size[1] < 0:
                 # don't bother drawing as the item is outside the visible area
                 continue
-            clip_size = (max(0, min(item.size[0], size.x-item.position.x)), max(0, min(item.size[1], size.y-item.position.y)))
+            clip_size = (max(0, min(item.size[0], size.x-p.x)), max(0, min(item.size[1], size.y-p.y)))
         else:
-            clip_size = (max(0, size.x - item.position.x), max(0, size.y - item.position.y))
-        r = _pygame.Rect(item.position, clip_size)
+            clip_size = (max(0, size.x - p.x), max(0, size.y - p.y))
+        r = _pygame.Rect(p, clip_size)
+
+        r = calc_viewport_clip_rect(item)
+        if r.w <= 0 or r.h <= 0:
+            continue
+
         # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
         # the CanvasItem drawing API cleaner (no need to pass in a surface)
+        print(item.name, r)
         subsurface = screen.subsurface(r)
         item._draw_surface = subsurface
         item.on_draw(subsurface)
         item._draw_surface = None
     scene_tree.clear_redraw_requests()
+
+def calc_viewport_clip_rect(item):
+    size = screen.get_size()
+    parent = item.get_parent()
+    pos = item.get_viewport_position()
+    if isinstance(parent, CanvasRectAreaItem):
+        clipw = min(parent.size[0]-item.position.x, item.size[0])
+        cliph = min(parent.size[1]-item.position.y, item.size[1])
+        clipw = max(0, min(clipw, size[0]-pos.x))
+        cliph = max(0, min(cliph, size[1]-pos.y))
+        return _pygame.Rect(pos.x, pos.y, clipw, cliph)
+    elif isinstance(item, CanvasRectAreaItem):
+        clipw = max(0, min(size[0]-pos.x, item.size[0]))
+        cliph = max(0, min(size[1]-pos.y, item.size[1]))
+        return _pygame.Rect(pos.x, pos.y, clipw, cliph)
+    else:
+        return _pygame.Rect(pos.x, pos.y, size[0]-pos.x, size[1]-pos.y)
+
 
 def request_redraw():
     """
@@ -263,6 +289,7 @@ def go():
     _init()
     _pygame.display.set_caption("Graphics 2D Window")
     _honor_display_mode_settings()
+
     try:
         hooks['on_ready']()
         _event_loop()

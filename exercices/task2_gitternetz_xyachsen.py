@@ -1,5 +1,5 @@
-import sys
-sys.path.append("..")
+import sys, os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from graphics2d import *
 
@@ -17,7 +17,7 @@ RESIZABLE = True
 
 def draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
-   
+
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
     background_color = WHITE
     w, h = get_window_size()
@@ -29,7 +29,7 @@ def draw_grid(step, gridcolor):
     # Zeichnet Achsen
     draw_line((0, h/2), (w, h/2), RED, 1)
     draw_line((w/2, 0), (w/2, h), GREEN, 1)
-    
+
     # Zeichnet ein Gitternetz
     xcount = int(w/2/step)+1
     ycount = int(h/2/step)+1
@@ -40,10 +40,10 @@ def draw_grid(step, gridcolor):
     for y in range(1, ycount):
         draw_line((0, h/2+y*step), (w, h/2+y*step), gridcolor, 1)
         draw_line((0, h/2-y*step), (w, h/2-y*step), gridcolor, 1)
-    
+
 
 def ready():
-    # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.    
+    # Wird aufgerufen, wenn das Grafik-Framework bereit ist, unmittelbar vor dem Start der Event Loop.
 
     # Setze Fenstertitel
     set_window_title("Aufgabe: Gitternetz mit Achsen")
