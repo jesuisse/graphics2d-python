@@ -139,6 +139,15 @@ class Spiel:
     def zuletzt_gespielte_karte(self):
         return self.gespielt.zeige_oberste()
 
+    def karte_wird_gespielt(self, karte):
+        self.gespielt.lege_auf_stapel(karte)
+
+    def ist_am_zug(self, spieler):
+        if spieler == -1:
+            return False
+        else:
+            return spieler == self.am_zug
+        
     def mache_zug(self):
         oberste = self.gespielt.zeige_oberste()
         hand = self.spieler[self.am_zug]
