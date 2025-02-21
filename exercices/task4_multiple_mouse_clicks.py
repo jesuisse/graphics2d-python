@@ -16,6 +16,8 @@ ALWAYS_REDRAW = False
 # als Alternative zu globalen Variablen.
 g = VarContainer()
 g.mouse_coords = []
+g.meine_lieblings_netflix_serie = "...."
+g.mein_lieblings_lied = "Alle meine Entlein"
 
 
 def on_draw():
