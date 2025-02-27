@@ -49,9 +49,14 @@ def on_draw():
     # kartenstapel zum aufnehmen
     uno_game_ui.display_stack()
 
+    oberste = uno_game.zuletzt_gespielte_karte()
+
     for nr in range(uno_game.anzahl_der_spieler()):
         if uno_game.ist_am_zug(nr):
-            color = BLUE
+            if oberste.ist_aktives_verbot():
+                color = RED
+            else:
+                color = BLUE
         else:
             color = BLACK
         uno_game_ui.display_hand_background(nr, color)
@@ -80,7 +85,10 @@ def mache_spielerzug(spieler):
     """
     Sorgt dafür, dass die Karte gespielt wird, auf die der Spieler geklickt hat
     """    
-    uno_game.mache_zug()
+    #uno_game.mache_zug()
+    hand = uno_game.hand_von_spieler(0)
+    hand.gib(card_under_cursor)
+    
     
 def mache_computerzug(spieler):
     """

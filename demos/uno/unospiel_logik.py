@@ -17,6 +17,9 @@ class Karte:
 
         return False
 
+    def ist_aktives_verbot(self):
+        return self.ist_verbot() and not self.wurde_verwendet
+
     def ist_verbot(self):
         return self.symbol == "spielverbot"
 
