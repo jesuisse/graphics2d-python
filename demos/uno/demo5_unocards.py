@@ -32,12 +32,17 @@ def on_input(event):
     
     if event.type == MOUSEBUTTONDOWN and event.button == 1:
         player = uno_game_ui.get_player_hand_under_cursor(event.pos)
-        if uno_game.ist_am_zug(player):
+        
+        if uno_game_ui.is_stack_under_cursor(event.pos):
+            nimm_karte_auf()
+                    
+        elif uno_game.ist_am_zug(player):
             if player == 0:
                 mache_spielerzug(player)
             else:
                 mache_computerzug(player)
-
+    
+        
 
 
 def on_draw():
@@ -87,8 +92,11 @@ def mache_spielerzug(spieler):
     """    
     #uno_game.mache_zug()
     hand = uno_game.hand_von_spieler(0)
-    hand.gib(card_under_cursor)
-    
+        
+    if card_under_cursor.ist_spielbar_auf(uno_game.zuletzt_gespielte_karte()):
+        hand.gib(card_under_cursor)
+        uno_game.karte_wird_gespielt(card_under_cursor)
+        uno_game.weiter_zur_nächsten_person()
     
 def mache_computerzug(spieler):
     """
@@ -97,7 +105,11 @@ def mache_computerzug(spieler):
     """    
     uno_game.mache_zug()
     
-
+def nimm_karte_auf():
+    karte = uno_game.nimm_karte_auf()
+    hand = uno_game.hand_von_spieler(0)
+    hand.nimm(karte)
+    
 
 go()
 print(__file__)

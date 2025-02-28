@@ -150,7 +150,11 @@ class Spiel:
             return False
         else:
             return spieler == self.am_zug
+    
+    def nimm_karte_auf(self):
+        return self.stapel.nimm_oberste()
         
+    
     def mache_zug(self):
         oberste = self.gespielt.zeige_oberste()
         hand = self.spieler[self.am_zug]
