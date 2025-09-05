@@ -49,18 +49,6 @@ hooks = {
     'on_resized': empty_func
 }
 
-# TODO: we can get rid of this in a few months - only there to support the first batch of
-# students who started learning with the initial hook names. It maps old names to new ones.
-# - Nov 24
-compat_hooks = {
-    'draw': 'on_draw',
-    'update': 'on_update',
-    'input': 'on_input',
-    'ready': 'on_ready',
-    'exit': 'on_exit',
-    'resized': 'on_resized'
-    }
-
 _calling_module = None
 _icon_already_set = False
 
@@ -283,11 +271,7 @@ def go():
         if name in g:
             settings[name] = getattr(mod, name)
 
-    # only here for backwards compatibility - see note for compat_hooks!
-    for name in compat_hooks.keys():
-        if name in g:
-            hooks[compat_hooks[name]] = getattr(mod, name)
-
+    
     _init()
     _pygame.display.set_caption("Graphics 2D Window")
     _honor_display_mode_settings()
