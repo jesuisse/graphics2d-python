@@ -1,6 +1,6 @@
 from graphics2d.scenetree.sceneitem import SceneItem
 from pygame.math import Vector2
-from pygame import Color
+from pygame import Color, Rect
 import pygame.draw as draw
 
 
@@ -49,6 +49,12 @@ class CanvasItem(SceneItem):
             return node.position + self._get_viewport_position(parent)
         else:
             return node.position
+
+    def get_bbox(self) -> Rect:
+        """
+        Returns the bounding box of this item
+        """
+        return Rect(self.position, self.size)
 
     def on_ready(self):
         pass
