@@ -10,6 +10,7 @@ class SceneTree:
     def __init__(self, **kwargs):
         self.root = None
         self.redraw_requests = {}
+        self.modalstack = []
 
     def __del__(self):
         self.clear_tree()
@@ -30,6 +31,26 @@ class SceneTree:
         self.root = None
         self.clear_redraw_requests()
 
+    def make_modal(self, node):
+        """ 
+        Makes the node modal, e.g. input events will only
+        go to that control
+        """
+        self.modalstack.append(node)
+    
+    def has_active_modal(self):
+        return len(self.modalstack) > 0
+
+    def get_active_modal_node(self):
+        if self.has_active_modal():
+            return self.modalstack[-1]
+        else:
+            return None
+
+
+    def clear_modal(self, node):
+        if node in self.modalstack:
+            self.modalstack.remove(node)
 
     def has_redraw_requests(self):
         return len(self.redraw_requests) > 0

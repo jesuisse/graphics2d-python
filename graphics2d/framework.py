@@ -19,7 +19,7 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title', 'get_scenetree', 'VarContainer'
+    'set_window_title', 'get_window_surface', 'get_scenetree', 'VarContainer', 'CanvasItem', 'CanvasRectAreaItem'
     ]
 
 import inspect
@@ -120,7 +120,7 @@ def _event_loop():
             if event.type == _pygame.QUIT:
                 running = False
             elif event.type == _pygame.VIDEORESIZE:
-                # set window size 'constants' to behave as people expect
+                # set window size 'constants' to behave as students expect
                 # (tested; keeping these at the original values confuses people)
                 if _calling_module:
                     setattr(_calling_module, 'WIDTH', event.w)
@@ -129,6 +129,9 @@ def _event_loop():
                 _handle_scenetree_resize(event.w, event.h)
                 scene_tree.request_redraw_all(scene_tree.root)
                 request_redraw()
+            elif scene_tree.has_active_modal():
+                modal = scene_tree.get_active_modal_node()
+                modal.on_input(event)
             else:
                 _handle_scenetree_input(event)
                 hooks['on_input'](event)
@@ -139,9 +142,14 @@ def _event_loop():
         msecs = dt.seconds * 1000 + (dt.microseconds / 1000)
         hooks['on_update'](msecs)
         _handle_scenetree_updates(msecs)
-        if needs_redraw or settings['ALWAYS_REDRAW'] or scene_tree.has_redraw_requests():
+        drawn = False
+        if needs_redraw or settings['ALWAYS_REDRAW']:
+            drawn = True
             hooks['on_draw']()
+        if scene_tree.has_redraw_requests():
+            drawn = True
             _handle_scenetree_drawing()
+        if drawn:
             _pygame.display.flip()
             needs_redraw = False
         clock.tick(settings['MAX_FPS'])
@@ -168,7 +176,7 @@ def _handle_scenetree_drawing():
 
     for item in scene_tree.depthfirst_preorder():
         p = item.get_viewport_position()
-        if item not in scene_tree.redraw_requests or not isinstance(item, CanvasItem):
+        if not isinstance(item, CanvasItem) or (not settings['ALWAYS_REDRAW'] and item not in scene_tree.redraw_requests):
             # either an item with no visual represenatation or no redraw request for this item
             continue
         elif isinstance(item, CanvasRectAreaItem):
@@ -244,6 +252,12 @@ def get_window_height():
     Returns the height of the window in pixels
     """
     return screen.get_height()
+
+def get_window_surface():
+    """
+    Returns the surface this window draws its content onto
+    """
+    return screen
 
 def get_runtime_in_msecs():
     """

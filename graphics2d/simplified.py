@@ -87,6 +87,12 @@ def get_all_fontnames():
     """
     return _draw.get_fontnames() 
 
+def get_font(fontname, fontsize=16):
+    """
+    Given a fontname, returns the font
+    """
+    return _draw.get_font(fontname, fontsize)
+
 def load_image(filename):
     """
     Loads the image stored in the file with the given filename.

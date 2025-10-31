@@ -1,6 +1,6 @@
 from graphics2d.framework import *
 from pygame import Rect, Color
-from pygame.math import Vector2, clamp, lerp
+from pygame.math import Vector2
 import pygame.locals as const
 from graphics2d.simplified import *
 
