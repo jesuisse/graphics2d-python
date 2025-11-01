@@ -1,6 +1,6 @@
 from graphics2d.scenetree.sceneitem import SceneItem
 from pygame.math import Vector2
-from pygame import Color
+from pygame import Color, Rect
 import pygame.draw as draw
 
 
@@ -155,7 +155,7 @@ class CanvasRectAreaItem(CanvasItem):
         return self.max_size
 
     def get_bbox(self):
-	return Rect(self.position, self.size)
+        return Rect(self.position, self.size)
 
     def on_resized(self, new_width, new_height):
         self.size[0] = new_width
