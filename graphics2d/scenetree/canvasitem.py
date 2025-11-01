@@ -154,6 +154,9 @@ class CanvasRectAreaItem(CanvasItem):
     def get_max_size(self):
         return self.max_size
 
+    def get_bbox(self):
+	return Rect(self.position, self.size)
+
     def on_resized(self, new_width, new_height):
         self.size[0] = new_width
         self.size[1] = new_height
