@@ -1,4 +1,6 @@
+import sys
 import weakref
+import traceback
 from graphics2d.scenetree.sceneitem import SceneItem
 from graphics2d.scenetree.canvasitem import CanvasItem
 
@@ -73,17 +75,28 @@ class SceneTree:
             if isinstance(node, CanvasItem):
                 self.redraw_requests[node] = True
 
+
     def notify_enter(self, item):
         """
-        Notifies first the item and then all it's descendants that they have entered the tree
+        Notifies first the item and then all it's descendants that they have entered the tree.
+        
+        This takes care of 
+           - setting the tree property
+           - calling on_enter()
+           - requesting a redraw if the item is a CanvasItem
+           - recursively handling all children
+           - calling on_child_entered() for each child
+           - calling on_ready() if this is the first time the item is added to the tree
         """
-        for node in self.depthfirst_preorder(item):
-            node.tree = weakref.ref(self)
-            node.on_enter()
-            self.request_redraw(node)
-            parent = node.get_parent()
-            if parent:
-                parent.on_child_entered(node)
+        item.tree = weakref.ref(self)
+        item.on_enter()
+        if isinstance(item, CanvasItem):
+            self.request_redraw(item)
+        for child in item.children:
+            self.notify_enter(child)
+            item.on_child_entered(child)            
+        if not item._initialized:
+            item.on_ready()
 
 
     def notify_exit(self, item):
@@ -92,8 +105,18 @@ class SceneTree:
         the tree
         """
         for node in self.depthfirst_postorder(item):
-            node.on_exit()
-            node.tree = None
+            try:
+                node.on_exit()
+            except Exception as e:
+                # we log exceptions to stderr but otherwise ignore them to allow other exit
+                # handlers to run cleanly, as there might be external resources that would be left
+                # in an undefined state if on_exit wasn't guaranteed to run. TODO: Maybe add interactive
+                # debugger hook later on to allow the developer to look at what's wrong?
+                print(f"<'{node.name}'>.on_exit() produced an exception:", file=sys.stderr)
+                print(e, file=sys.stderr)
+                print(traceback.format_exc())
+            finally:
+                node.tree = None
 
 
     def depthfirst_preorder(self, item: SceneItem = None):

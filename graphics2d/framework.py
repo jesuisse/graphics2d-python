@@ -22,6 +22,7 @@ __all__ = [
     'set_window_title', 'get_window_surface', 'get_scenetree', 'VarContainer', 'CanvasItem', 'CanvasRectAreaItem'
     ]
 
+import sys
 import inspect
 import pygame as _pygame
 from pygame.math import Vector2
@@ -120,15 +121,7 @@ def _event_loop():
             if event.type == _pygame.QUIT:
                 running = False
             elif event.type == _pygame.VIDEORESIZE:
-                # set window size 'constants' to behave as students expect
-                # (tested; keeping these at the original values confuses people)
-                if _calling_module:
-                    setattr(_calling_module, 'WIDTH', event.w)
-                    setattr(_calling_module, 'HEIGHT', event.h)
-                hooks['on_resized'](event.w, event.h)
-                _handle_scenetree_resize(event.w, event.h)
-                scene_tree.request_redraw_all(scene_tree.root)
-                request_redraw()
+               _handle_window_resize(event)
             elif scene_tree.has_active_modal():
                 modal = scene_tree.get_active_modal_node()
                 modal.on_input(event)
@@ -153,6 +146,18 @@ def _event_loop():
             _pygame.display.flip()
             needs_redraw = False
         clock.tick(settings['MAX_FPS'])
+
+def _handle_window_resize(event):
+    # set window size 'constants' to behave as students expect
+    # (tested; keeping these at the original values confuses people)
+    if _calling_module:
+        setattr(_calling_module, 'WIDTH', event.w)
+        setattr(_calling_module, 'HEIGHT', event.h)
+    hooks['on_resized'](event.w, event.h)
+    _handle_scenetree_resize(event.w, event.h)
+    scene_tree.request_redraw_all(scene_tree.root)
+    request_redraw()
+
 
 def _handle_scenetree_input(event):
     # TODO: Figure out how to mark an event as handled so we stop propagating it
@@ -292,9 +297,15 @@ def go():
 
     try:
         hooks['on_ready']()
-        _event_loop()
-        hooks['on_exit']()
-    finally:
+        _event_loop()        
+    finally:        
+        # make sure main on_exit handler runs
+        try:
+            hooks['on_exit']()
+        except Exception as e:
+            print("Exception occured while processing the main on_exit callback.", file=sys.stderr)
+            print(e, file=sys.stderr)
+        
         # make sure we quit pygame. If we don't because an exception bypasses this,
         # some systems may freeze until they notice we're dead.
         _pygame.quit()

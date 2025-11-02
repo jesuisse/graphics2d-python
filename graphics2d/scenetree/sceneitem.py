@@ -10,12 +10,13 @@ class SceneItem:
         self.children = []      # Will hold references to all the children
         self.parent = None      # Will hold a weak reference to the parent
         self.tree = None        # Will hold a weak reference to the scene tree
+        self._initialized = False # Flag to remember whether on_ready was already called. Managed by Tree.
         self.filtered_events = ()  # Will receive all events
 
         if 'name' in kwargs:
             self.name = kwargs['name']
         else:
-            self.name = "SceneItem-" + str(id)
+            self.name = self.__class__.__name__ + '-' + str(id(self))
 
         if 'filtered_events' in kwargs:
             self.filtered_events = kwargs['filtered_events']
@@ -38,11 +39,12 @@ class SceneItem:
         Callback: Called when the item enters the scene tree
         """
         pass
+        
 
     def on_child_entered(self, child):
         """
         Callback: Called when a child item enters the scene tree
-        """
+        """        
         pass
 
     def on_exit(self):
@@ -52,6 +54,11 @@ class SceneItem:
         pass
 
     def add_child(self, child):
+        """
+        Adds a child to this node.
+        If we are in the tree, then the whole child's subtree will get on_entered notifications going down the subtree,
+        and on_ready coming back up. on_ready only happens the first time a node is added to the tree.
+        """
         if child in self.children:
             raise ValueError("The item {} is already a child of {}".format(child.name, self.name))
         if child.get_parent() != None:
@@ -61,6 +68,7 @@ class SceneItem:
         tree = self.get_tree()
         if tree:
             tree.notify_enter(child)
+
 
     def remove_child(self, child):
         if child.get_parent() != self:

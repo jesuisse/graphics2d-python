@@ -18,9 +18,7 @@ class CanvasItem(SceneItem):
 
         if 'name' in kwargs:
             self.name = kwargs['name']
-        else:
-            self.name = "CanvasItem-" + str(id)
-
+       
         if 'position' in kwargs:
             self.position = kwargs['position']
         else:
