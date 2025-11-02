@@ -1,5 +1,5 @@
 """
-Simplified 2D Graphics interface for teaching  (c) 2024 by Pascal Schuppli
+Simplified 2D Graphics interface for teaching  (c) 2024-present by Pascal Schuppli
 
 This is comparable to pygame zero, but provides access to more of pygame (especially surfaces) and
 a scene tree which can be used to work with graphical objects, some of which are provided to facilitate
@@ -194,7 +194,7 @@ def _handle_scenetree_drawing():
 
         # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
         # the CanvasItem drawing API cleaner (no need to pass in a surface)
-        print(item.name, r)
+        #print(item.name, r)
         subsurface = screen.subsurface(r)
         item._draw_surface = subsurface
         item.on_draw(subsurface)

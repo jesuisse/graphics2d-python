@@ -50,6 +50,12 @@ class CanvasItem(SceneItem):
         else:
             return node.position
 
+    def get_bbox(self) -> Rect:
+        """
+        Returns the bounding box of this item
+        """
+        return Rect(self.position, self.size)
+
     def on_ready(self):
         pass
 
