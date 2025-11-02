@@ -36,7 +36,8 @@ class SceneItem:
 
     def on_enter(self):
         """
-        Callback: Called when the item enters the scene tree
+        Callback: Called when the item enters the scene tree, *before*
+        it's children enter the tree.
         """
         pass
         
@@ -46,6 +47,14 @@ class SceneItem:
         Callback: Called when a child item enters the scene tree
         """        
         pass
+
+    def on_ready(self):
+        """
+        Callback: Called when a child item enters the tree for the first
+        time, *after* all it's children have run their on_ready's.
+
+        on_ready() runs after on_enter().
+        """
 
     def on_exit(self):
         """
