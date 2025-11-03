@@ -1,6 +1,6 @@
-from graphics2d.scenetree.canvasitem import CanvasItem, CanvasRectAreaItem
+from graphics2d.scenetree import SceneItem, CanvasItem, CanvasRectAreaItem
 from pygame.math import Vector2
-from pygame import Rect
+from pygame import Rect, Surface
 
 
 class CanvasContainer(CanvasRectAreaItem):
@@ -32,24 +32,33 @@ class CanvasContainer(CanvasRectAreaItem):
         self.request_redraw()
 
     def on_draw(self, draw_surface):
-        return # TODO: REMOVE THIS!
         for child in self.children:
-            if not isinstance(child, CanvasItem):
-                continue
-            if isinstance(child, CanvasRectAreaItem):
-                if child.position[0] > self.size[0] or child.position[1] > self.size[1] or child.position[0] + child.size[0] < 0 or child.position[1] + child.size[1] < 0:
-                    # don't bother drawing as the child is outside the visible area
-                    continue
-                clip_size = (max(0, min(child.size[0], self.size.x-child.position.x)), max(0, min(child.size[1], self.size.y-child.position.y)))
-            else:
-                clip_size = (max(0, self.size.x - child.position.x), max(0, self.size.y - child.position.y))
-            r = Rect(child.position, clip_size)
-            # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
-            # the CanvasItem drawing API cleaner (no need to pass in a surface)
-            subsurface = draw_surface.subsurface(r)
-            child._draw_surface = subsurface
-            child.on_draw(subsurface)
-            child._draw_surface = subsurface
+            self._draw_child(child, draw_surface, draw_surface.get_size())
+            
+
+    def _draw_child(self, child: SceneItem, draw_surface: Surface, size: tuple):
+        if not isinstance(child, CanvasItem):
+            return        
+        if isinstance(child, CanvasRectAreaItem):
+            if child.position[0] > self.size[0] or child.position[1] > self.size[1] or child.position[0] + child.size[0] < 0 or child.position[1] + child.size[1] < 0:
+                # don't bother drawing as the child is outside the visible area
+                return
+            # TODO: Figure out why self.size can be larger than draw_surface.size (which leads to an exception if
+            # we use the commented out clip_size calculation)
+            #clip_size = (max(0, min(child.size[0], self.size.x-child.position.x)), max(0, min(child.size[1], self.size.y-child.position.y)))            
+            clip_size = (min(child.size[0],size[0]-child.position.x), min(child.size[1], size[1]-child.position.y))
+        else:
+            clip_size = (size[0] - child.position.x, size[1] - child.position.y)
+        if clip_size[0] <= 0 or clip_size[1] <= 0:
+            # do not draw children who's visible area is zero
+            return        
+        # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
+        # the CanvasItem drawing API cleaner (no need to pass in a surface)            
+        r = Rect(child.position, clip_size)
+        subsurface = draw_surface.subsurface(r)
+        child._draw_surface = subsurface
+        child.on_draw(subsurface)
+        child._draw_surface = None
 
 
     def layout(self):
@@ -159,7 +168,7 @@ class BoxContainer(CanvasContainer):
         leftover = self.size[orientation]
         if not unconstrained and leftover - max_total - (self.separation)*(visible_count-1) > 0:
             # all children are maxed out and we have space availabe. Calc separator
-            separation_gap = self.separation + (leftover - max_total) / (visible_count-1)
+            separation_gap = (leftover - max_total) / (visible_count-1)
         else:
             separation_gap = self.separation
 
@@ -207,14 +216,12 @@ class BoxContainer(CanvasContainer):
             pos += calc_sizes[i][orientation] + separation_gap
 
             calc_sizes[i][1-orientation] = self._layout_along_secondary_axis(child, min_sizes[i][1-orientation], max_sizes[i][1-orientation])
-
             # notify child that it has a new size.
             child.on_resized(calc_sizes[i][0], calc_sizes[i][1])
             # might not work because we're not in the tree yet, possibly...
             if self.get_tree():
-             child.request_redraw()
-
-            #print(child.name, child.position, child.size)
+                child.request_redraw()
+            
 
 
     def _layout_along_secondary_axis(self, child, minsize, maxsize):
@@ -253,8 +260,9 @@ class HBoxContainer(BoxContainer):
 class PanelContainer(CanvasContainer):
     """
     PanelContainer contains a single child. It provides the child with a margin, border and background.
+    If you add multiple children to the PanelContainer, only the first CanvasRectAreaItem is drawn.
 
-    The margin separates this item its parent; it is immediately followed by the border, and
+    The margin separates this item from its parent; it is immediately followed by the border, and
     the content CanvasItem is placed *inside* the border, on top of the given background. The background
     does not fill the margins.
     """
@@ -283,15 +291,19 @@ class PanelContainer(CanvasContainer):
         else:
             raise ValueError("expected either a single number for all 4 sides, a sequence of (left, right, top, bottom) or (left/right, top/bottom) sizes")
 
-    def get_content_min_size(self):
+    
+    def _find_child(self) -> CanvasRectAreaItem:
         i = 0
         child = None
         # Find first usable child. We don't layout any other children even if there are more.
-        while i < len(self.children):
+        while i < len(self.children) and not isinstance(child, CanvasRectAreaItem):
             child = self.children[i]
-            i += 1
-            if isinstance(child, CanvasRectAreaItem):
-                break
+            i += 1        
+        return child
+        
+
+    def get_content_min_size(self):        
+        child = self._find_child()
 
         min_width = self.margins[0] + self.margins[1] + self.borders[0] + self.borders[1]
         min_height = self.margins[2] + self.margins[3] + self.borders[2] + self.borders[3]
@@ -304,17 +316,9 @@ class PanelContainer(CanvasContainer):
 
 
     def layout(self):
-        i = 0
-        child = None
-        # Find first usable child. We don't layout any other children even if there are more.
-        while i < len(self.children):
-            child = self.children[i]
-            i += 1
-            if isinstance(child, CanvasRectAreaItem):
-                break
+        child = self._find_child()
         if child is None:
             return
-
 
         child.position[0] = self.margins[0] + self.borders[0]
         child.position[1] = self.margins[2] + self.borders[2]
@@ -335,8 +339,20 @@ class PanelContainer(CanvasContainer):
 
 
     def on_draw(self, draw_surface):
+        # draw background
         w = self.size[0] - self.margins[0] - self.margins[1]
         h = self.size[1] - self.margins[2] - self.margins[3]
         if self.bg_color:
             self.draw_filled_rect(Rect(self.margins[0], self.margins[2], w, h), self.bg_color)
+
+        child = self._find_child()
+        if not child:
+            return
+
+        ssize = draw_surface.get_size()
+        ssize = [ssize[0] - self.margins[1] - self.borders[1], 
+                 ssize[1] - self.margins[3] - self.borders[3]]
+        self._draw_child(child, draw_surface, ssize)
+
+        
 

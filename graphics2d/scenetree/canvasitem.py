@@ -164,6 +164,7 @@ class CanvasRectAreaItem(CanvasItem):
     def on_resized(self, new_width, new_height):
         self.size[0] = new_width
         self.size[1] = new_height
+        
 
 
 class CanvasColorRect(CanvasRectAreaItem):

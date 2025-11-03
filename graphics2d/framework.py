@@ -19,7 +19,8 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title', 'get_window_surface', 'get_scenetree', 'VarContainer', 'CanvasItem', 'CanvasRectAreaItem'
+    'set_window_title', 'get_window_surface', 'get_scenetree', 'VarContainer', 
+    'CanvasItem', 'CanvasRectAreaItem', 'PanelContainer', 'HBoxContainer', 'VBoxContainer'
     ]
 
 import sys
@@ -28,7 +29,7 @@ import pygame as _pygame
 from pygame.math import Vector2
 import datetime
 import os.path
-from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem
+from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem, CanvasContainer, PanelContainer, HBoxContainer, VBoxContainer
 
 
 class VarContainer:
@@ -141,7 +142,8 @@ def _event_loop():
             hooks['on_draw']()
         if scene_tree.has_redraw_requests():
             drawn = True
-            _handle_scenetree_drawing()
+            size = Vector2(screen.get_size())
+            _handle_scenetree_drawing(scene_tree.root, size)
         if drawn:
             _pygame.display.flip()
             needs_redraw = False
@@ -176,7 +178,41 @@ def _handle_scenetree_resize(new_width, new_height):
         # Should we only do this for CanvasItems?
         root.on_resized(new_width, new_height)
 
-def _handle_scenetree_drawing():
+
+def _handle_scenetree_drawing(node, size):
+    # First handle drawing of the children, unless node is a CanvasContainer. These must handle
+    # their children on their own. This means that the order in which we draw nodes in the tree
+    # is depth first in post-order.
+    if not isinstance(node, CanvasContainer):
+        for child in node.children:
+            _handle_scenetree_drawing(child, size)
+    
+    p = node.get_viewport_position()
+    if not isinstance(node, CanvasItem) or (not settings['ALWAYS_REDRAW'] and node not in scene_tree.redraw_requests):
+        # Either an item with no visual representation or no redraw request for this item
+        return
+    elif isinstance(node, CanvasRectAreaItem):
+        if p[0] > size[0] or p[1] > size[1] or p[0] + node.size[0] < 0 or p[1] + node.size[1] < 0:
+            # don't bother drawing as the item is outside the visible area
+            return
+        clip_size = (max(0, min(node.size[0], size.x-p.x)), max(0, min(node.size[1], size.y-p.y)))
+    else:
+        clip_size = (max(0, size.x - p.x), max(0, size.y - p.y))
+
+    r = _pygame.Rect(p, clip_size)
+    r = calc_viewport_clip_rect(node)
+    if r.w <= 0 or r.h <= 0:
+        return
+
+    # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
+    # the CanvasItem drawing API cleaner (no need to pass in a surface)    
+    subsurface = screen.subsurface(r)
+    node._draw_surface = subsurface
+    node.on_draw(subsurface)
+    node._draw_surface = None
+
+
+def _handle_scenetree_drawing2():
     size = Vector2(screen.get_size())
 
     for item in scene_tree.depthfirst_preorder():

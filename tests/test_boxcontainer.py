@@ -26,7 +26,7 @@ def on_ready():
     root = PanelContainer(name="root", bg_color=MAGENTA)
     root.size = Vector2(WIDTH, HEIGHT)
 
-    panel = PanelContainer(name="panel", bg_color=Color(30, 30, 30), margins=5)
+    panel = PanelContainer(name="panel", bg_color=Color(30, 30, 30), margins=5, borders=0)
 
     box = BoxContainer(name="box", separation=5)
 
