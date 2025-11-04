@@ -26,11 +26,12 @@ __all__ = [
 import sys
 import inspect
 import pygame as _pygame
+import pygame.locals as const
 from pygame.math import Vector2
 import datetime
 import os.path
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem, CanvasContainer, PanelContainer, HBoxContainer, VBoxContainer
-
+from graphics2d.events import is_focus_event, is_pointer_event
 
 class VarContainer:
     """
@@ -127,7 +128,8 @@ def _event_loop():
                 modal = scene_tree.get_active_modal_node()
                 modal.on_input(event)
             else:
-                _handle_scenetree_input(event)
+                scene_tree.event_consumed = False
+                _handle_scenetree_input(scene_tree.root, event)
                 hooks['on_input'](event)
 
         now = datetime.datetime.now()
@@ -161,11 +163,40 @@ def _handle_window_resize(event):
     request_redraw()
 
 
-def _handle_scenetree_input(event):
-    # TODO: Figure out how to mark an event as handled so we stop propagating it
-    for item in scene_tree.depthfirst_postorder():
-        # should we only do this for CanvasItems?
-        item.on_input(event)
+def _handle_scenetree_input(node, event):    
+    if is_focus_event(event):
+        # focus events are only sent to the currently focused item
+        # this is most likely wrong: all on_input callbacks should receive them
+        if scene_tree.focused:
+            scene_tree.focused.on_input(event)
+            if isinstance(scene_tree.focused, CanvasRectAreaItem) and not scene_tree.event_consumed:
+                scene_tree.focused.on_gui_input(event)
+            
+            # do not send this event to other items in the tree
+            return
+
+    if isinstance(node, CanvasContainer):
+        node.on_input(event)
+        if scene_tree.event_consumed:
+            return
+        node.on_gui_input(event)        
+    else:
+        # send event to all the children
+        for child in node.children:
+            _handle_scenetree_input(child, event)
+            if scene_tree.event_consumed:
+                return
+
+        # send event to node's on_input callback
+        if isinstance(node, CanvasItem): 
+            node.on_input(event)
+            if scene_tree.event_consumed:
+                return        
+        
+        # if event wasn't handled, send it to node's on_gui_input
+        if isinstance(node, CanvasRectAreaItem):
+            node.on_gui_input(event)
+
 
 def _handle_scenetree_updates(dt):
     for item in scene_tree.depthfirst_postorder():
@@ -212,35 +243,7 @@ def _handle_scenetree_drawing(node, size):
     node._draw_surface = None
 
 
-def _handle_scenetree_drawing2():
-    size = Vector2(screen.get_size())
 
-    for item in scene_tree.depthfirst_preorder():
-        p = item.get_viewport_position()
-        if not isinstance(item, CanvasItem) or (not settings['ALWAYS_REDRAW'] and item not in scene_tree.redraw_requests):
-            # either an item with no visual represenatation or no redraw request for this item
-            continue
-        elif isinstance(item, CanvasRectAreaItem):
-            if p[0] > size[0] or p[1] > size[1] or p[0] + item.size[0] < 0 or p[1] + item.size[1] < 0:
-                # don't bother drawing as the item is outside the visible area
-                continue
-            clip_size = (max(0, min(item.size[0], size.x-p.x)), max(0, min(item.size[1], size.y-p.y)))
-        else:
-            clip_size = (max(0, size.x - p.x), max(0, size.y - p.y))
-        r = _pygame.Rect(p, clip_size)
-
-        r = calc_viewport_clip_rect(item)
-        if r.w <= 0 or r.h <= 0:
-            continue
-
-        # This is ugly, but allows CanvasItems to draw without having their own surface AND makes
-        # the CanvasItem drawing API cleaner (no need to pass in a surface)
-        #print(item.name, r)
-        subsurface = screen.subsurface(r)
-        item._draw_surface = subsurface
-        item.on_draw(subsurface)
-        item._draw_surface = None
-    scene_tree.clear_redraw_requests()
 
 def calc_viewport_clip_rect(item):
     size = screen.get_size()

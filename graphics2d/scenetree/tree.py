@@ -10,9 +10,14 @@ class SceneTree:
     """
 
     def __init__(self, **kwargs):
-        self.root = None
+        self.root = SceneItem(name="root placeholder")
         self.redraw_requests = {}
         self.modalstack = []
+        # Stores the currently focused tree item
+        self.focused = None
+
+        self.event_consumed = False
+
 
     def __del__(self):
         self.clear_tree()
@@ -40,6 +45,17 @@ class SceneTree:
         """
         self.modalstack.append(node)
     
+    def grab_focus(self, node):
+        self.focused = node
+
+    def release_focus(self, node):
+        if self.focused == node:
+            self.focused = None
+
+    def consume_event(self):
+        self.event_consumed = True
+       
+
     def has_active_modal(self):
         return len(self.modalstack) > 0
 

@@ -37,16 +37,21 @@ class CanvasItem(SceneItem):
 
     def get_viewport_position(self):
         """
-        Returns the position of this item relative to the top left corner of the viewport
+        Returns the position of this item relative to the top left corner of the viewport.
         """
         return self._get_viewport_position(self)
 
     def _get_viewport_position(self, node):
         parent = node.parent() if node.parent else None
-        if parent:
-            return node.position + self._get_viewport_position(parent)
+        if isinstance(node, CanvasItem):
+            pos = node.position
         else:
-            return node.position
+            pos = Vector2(0, 0)
+        if parent:
+            return pos + self._get_viewport_position(parent)
+        else:
+            return pos
+        
 
     def get_bbox(self) -> Rect:
         """
@@ -75,6 +80,12 @@ class CanvasItem(SceneItem):
     def on_input(self, event):
         """
         Callback to handle events.
+        """
+        pass
+
+    def on_unhandled_input(self, event):
+        """
+        Callback to handle events that haven't been marked as handled
         """
         pass
 
@@ -164,7 +175,14 @@ class CanvasRectAreaItem(CanvasItem):
     def on_resized(self, new_width, new_height):
         self.size[0] = new_width
         self.size[1] = new_height
-        
+
+    def on_gui_input(self, event):
+        """
+        CanvasRectAreas have a GUI input callback, which is only triggered when the 
+        event has originated in this item's space (for pointer events), or if this
+        item is focused (for key events)
+        """
+        pass
 
 
 class CanvasColorRect(CanvasRectAreaItem):

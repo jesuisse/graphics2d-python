@@ -62,6 +62,7 @@ class SceneItem:
         """
         pass
 
+    
     def add_child(self, child):
         """
         Adds a child to this node.
@@ -88,3 +89,32 @@ class SceneItem:
         self.children.remove(child)
         child.tree = None
         child.parent = None
+
+    def consume_event(self):
+        """
+        This marks the currently propagating event as handled so items after this one will not 
+        receive the event.
+        """
+        tree = self.get_tree()
+        if tree:
+            tree.consume_event()
+
+    def grab_focus(self):
+        """
+        Make this item the focused one.
+
+        Focused elements are the only ones receiving keyboard input.
+        """
+        tree = self.get_tree()
+        if tree:
+            tree.grab_focus(self)
+    
+    def release_focus(self):
+        """
+        Release focus.
+
+        Has no effect if this item wasn't focused.
+        """
+        tree = self.get_tree()
+        if tree:
+            tree.release_focus(self)

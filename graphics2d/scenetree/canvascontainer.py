@@ -1,5 +1,7 @@
 from graphics2d.scenetree import SceneItem, CanvasItem, CanvasRectAreaItem
+from graphics2d.events import is_pointer_event, get_event_location
 from pygame.math import Vector2
+import pygame.locals as const
 from pygame import Rect, Surface
 
 
@@ -12,7 +14,7 @@ class CanvasContainer(CanvasRectAreaItem):
     your CanvasItem is relative to the first CanvasItem ancestor in the tree.
 
     If you add your CanvasItem to a CanvasContainer, however, the container will take care of
-    distributing input, positioning, sizing and drawing your CanvasItem. In effect, a CanvasContainer
+    distributing pointer input, positioning, sizing and drawing your CanvasItem. In effect, a CanvasContainer
     is fully responsible for whatever happens in it's own screen space. The framework will NOT handle
     any of it, EXCEPT to send keyboard input to your CanvasItem directly if it has focus.
     """
@@ -68,6 +70,7 @@ class CanvasContainer(CanvasRectAreaItem):
         """
         pass
 
+
     def notify_children_resized(self):
         """
         Notifies children that they have been resized via the on_resized callback.
@@ -93,6 +96,29 @@ class CanvasContainer(CanvasRectAreaItem):
         """
         content_size = self.get_content_min_size()
         return (max(self.min_size[0], content_size[0]), max(self.min_size[1], content_size[1]))
+
+
+    def on_gui_input(self, event):
+        """
+        CanvasContainers receive input events via the special callback gui_input *if* the 
+        on_input mechanism hasn't consumed the event. The container then treates input
+        according to type; mouse and touch events are sent only to CanvasRectAreaItem children
+        that contain the pointer. 
+        """
+        if is_pointer_event(event):            
+            pos = get_event_location(event)
+            if pos:                
+                for child in self.children:
+                    viewport_pos = child.get_viewport_position()
+                    r = Rect(viewport_pos, child.get_bbox().size)
+                    if isinstance(child, CanvasRectAreaItem) and r.collidepoint(pos):
+                        child.on_gui_input(event)
+                        break
+            else:
+                # we get here for MOUSEWHEEL events. What do we do with them?
+                pass
+
+        # keyboard events are sent to the focused CanvasItem by the framework. 
 
 
 class BoxContainer(CanvasContainer):
