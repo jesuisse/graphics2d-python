@@ -127,9 +127,11 @@ def _event_loop():
             elif scene_tree.has_active_modal():
                 modal = scene_tree.get_active_modal_node()
                 modal.on_input(event)
+                if isinstance(modal, CanvasRectAreaItem) and not scene_tree.event_consumed:
+                    modal.on_gui_input(event)
             else:
                 scene_tree.event_consumed = False
-                _handle_scenetree_input(scene_tree.root, event)
+                scene_tree.handle_input(event, scene_tree.root)
                 hooks['on_input'](event)
 
         now = datetime.datetime.now()
@@ -137,7 +139,7 @@ def _event_loop():
         last = now
         msecs = dt.seconds * 1000 + (dt.microseconds / 1000)
         hooks['on_update'](msecs)
-        _handle_scenetree_updates(msecs)
+        scene_tree.perform_updates(msecs)
         drawn = False
         if needs_redraw or settings['ALWAYS_REDRAW']:
             drawn = True
@@ -163,50 +165,10 @@ def _handle_window_resize(event):
     request_redraw()
 
 
-def _handle_scenetree_input(node, event):    
-    if is_focus_event(event):
-        # focus events are only sent to the currently focused item
-        # this is most likely wrong: all on_input callbacks should receive them
-        if scene_tree.focused:
-            scene_tree.focused.on_input(event)
-            if isinstance(scene_tree.focused, CanvasRectAreaItem) and not scene_tree.event_consumed:
-                scene_tree.focused.on_gui_input(event)
-            
-            # do not send this event to other items in the tree
-            return
-
-    if isinstance(node, CanvasContainer):
-        node.on_input(event)
-        if scene_tree.event_consumed:
-            return
-        node.on_gui_input(event)        
-    else:
-        # send event to all the children
-        for child in node.children:
-            _handle_scenetree_input(child, event)
-            if scene_tree.event_consumed:
-                return
-
-        # send event to node's on_input callback
-        if isinstance(node, CanvasItem): 
-            node.on_input(event)
-            if scene_tree.event_consumed:
-                return        
-        
-        # if event wasn't handled, send it to node's on_gui_input
-        if isinstance(node, CanvasRectAreaItem):
-            node.on_gui_input(event)
-
-
-def _handle_scenetree_updates(dt):
-    for item in scene_tree.depthfirst_postorder():
-        # Should we only do this for CanvasItems?
-        item.on_update(dt)
 
 def _handle_scenetree_resize(new_width, new_height):
     root = scene_tree.root
     if isinstance(root, CanvasItem):
-        # Should we only do this for CanvasItems?
         root.on_resized(new_width, new_height)
 
 

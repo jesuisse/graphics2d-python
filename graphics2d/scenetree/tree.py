@@ -2,7 +2,9 @@ import sys
 import weakref
 import traceback
 from graphics2d.scenetree.sceneitem import SceneItem
-from graphics2d.scenetree.canvasitem import CanvasItem
+from graphics2d.scenetree.canvasitem import CanvasItem, CanvasRectAreaItem
+from graphics2d.scenetree.canvascontainer import CanvasContainer
+from graphics2d.events import is_focus_event, is_pointer_event
 
 class SceneTree:
     """
@@ -53,8 +55,7 @@ class SceneTree:
             self.focused = None
 
     def consume_event(self):
-        self.event_consumed = True
-       
+        self.event_consumed = True       
 
     def has_active_modal(self):
         return len(self.modalstack) > 0
@@ -64,7 +65,6 @@ class SceneTree:
             return self.modalstack[-1]
         else:
             return None
-
 
     def clear_modal(self, node):
         if node in self.modalstack:
@@ -196,3 +196,49 @@ class SceneTree:
             if isinstance(item, CanvasItem):
                 yield item
     
+    def perform_updates(self, dt):
+        """
+        Call update() on all items in the scene tree
+        """
+        for item in self.depthfirst_postorder():        
+            item.on_update(dt)
+
+
+    def handle_input(self, event, node):
+        """
+        Handles input events for the scene tree starting at node
+        """
+
+        if is_focus_event(event):
+            # focus events are only sent to the currently focused item
+            # this is most likely wrong: all on_input callbacks should receive them
+            if self.focused:
+                self.focused.on_input(event)
+                if isinstance(self.focused, CanvasRectAreaItem) and not self.event_consumed:
+                    self.focused.on_gui_input(event)
+                
+                # do not send this event to other items in the tree
+                return
+
+        if isinstance(node, CanvasContainer):
+            node.on_input(event)
+            if self.event_consumed:
+                return
+            node.on_gui_input(event)        
+        else:
+            # send event to all the children
+            for child in node.children:
+                self.handle_input(event, child)
+                if self.event_consumed:
+                    return
+
+            # send event to node's on_input callback
+            if isinstance(node, CanvasItem): 
+                node.on_input(event)
+                if self.event_consumed:
+                    return        
+            
+            # if event wasn't handled, send it to node's on_gui_input
+            if isinstance(node, CanvasRectAreaItem):
+                node.on_gui_input(event)
+

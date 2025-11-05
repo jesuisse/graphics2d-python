@@ -1,4 +1,5 @@
-from graphics2d.scenetree import SceneItem, CanvasItem, CanvasRectAreaItem
+from graphics2d.scenetree.sceneitem import SceneItem
+from graphics2d.scenetree.canvasitem import CanvasItem, CanvasRectAreaItem
 from graphics2d.events import is_pointer_event, get_event_location
 from pygame.math import Vector2
 import pygame.locals as const
