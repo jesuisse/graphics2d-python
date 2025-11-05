@@ -51,13 +51,8 @@ class CanvasItem(SceneItem):
             return pos + self._get_viewport_position(parent)
         else:
             return pos
-        
-
-    def get_bbox(self) -> Rect:
-        """
-        Returns the bounding box of this item
-        """
-        return Rect(self.position, self.size)
+    
+ 
 
     def on_ready(self):
         pass
@@ -69,7 +64,6 @@ class CanvasItem(SceneItem):
         draw_surface: The surface do draw this object on.
         """
         pass
-
     
     def on_input(self, event):
         """
@@ -79,11 +73,17 @@ class CanvasItem(SceneItem):
 
     def on_unhandled_input(self, event):
         """
-        Callback to handle events that haven't been marked as handled
+        Callback to handle events that haven't been marked as handled.
+        This runs *after* all items in the scene tree capable of handling
+        the event have had their on_input called.
         """
         pass
 
     def on_resized(self, new_width, new_height):
+        """
+        Callback when the item is resized. You shoul react to this if
+        the visual representation of this item depends on its size.
+        """
         pass
 
 
