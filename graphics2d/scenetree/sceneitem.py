@@ -62,7 +62,14 @@ class SceneItem:
         """
         pass
 
-    
+    def on_update(self, delta_time):
+        """
+        Callback: Called every frame with the time elapsed since last frame
+        """
+        pass
+
+
+
     def add_child(self, child):
         """
         Adds a child to this node.

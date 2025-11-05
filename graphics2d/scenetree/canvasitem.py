@@ -70,13 +70,7 @@ class CanvasItem(SceneItem):
         """
         pass
 
-    def on_update(self, dt):
-        """
-        Callback to update the state of this item. dt gives the number of milliseconds which have passed since
-        the last frame (or thereabouts)
-        """
-        pass
-
+    
     def on_input(self, event):
         """
         Callback to handle events.

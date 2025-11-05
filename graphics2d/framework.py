@@ -205,7 +205,7 @@ def _handle_scenetree_updates(dt):
 
 def _handle_scenetree_resize(new_width, new_height):
     root = scene_tree.root
-    if root:
+    if isinstance(root, CanvasItem):
         # Should we only do this for CanvasItems?
         root.on_resized(new_width, new_height)
 
