@@ -9,10 +9,8 @@ This enables students to write minimal valid graphical programs like this:
 
 from graphics2d import *
 
-WIDTH = HEIGHT = 500
-
 def draw():
-    draw_circle((250, 250), 100, RED)
+    draw_circle((350, 350), 100, RED)
 
 go()
 """
@@ -58,8 +56,8 @@ _icon_already_set = False
 # global constants which will be picked up from the importing python module and used to
 # for initial configuration of the graphics.
 settings = {
-    'WIDTH' : 1280,
-    'HEIGHT': 720,
+    'WIDTH' : 700,
+    'HEIGHT': 700,
     'ALWAYS_REDRAW': True,
     'MAX_FPS': 60,
     'FULLSCREEN': False,

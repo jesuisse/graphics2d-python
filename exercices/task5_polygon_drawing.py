@@ -48,16 +48,10 @@ def on_draw():
     # Füllt das ganze Fenster mit einer Hintergrundfarbe
     background_color = WHITE #Color(30, 30, 50)
     draw_filled_rect((0, 0), (w, h), background_color)
-<<<<<<< HEAD:exercices/task5_polygon_drawing.py
 
 
     polylinecolor = Color(70, 70, 70)
 
-=======
-    
-        
-            
->>>>>>> add0add (small changes):excercises/task5_polygon_drawing.py
     # Zeichnet fertige Polygone
     greyscale = 80
     for polygon in g.finished_polygons:        
@@ -74,15 +68,9 @@ def is_closer_than(a, b, distance):
     # Pythagoras
     return (a[0]-b[0])**2 + (a[1]-b[1])**2 < distance**2
 
-<<<<<<< HEAD:exercices/task5_polygon_drawing.py
 def on_input(event):
     if event.type == MOUSEBUTTONDOWN:
         if len(g.active_polygon_points) > 0 and is_closer_than(g.active_polygon_points[0], event.pos, 5):
-=======
-def on_input(event):        
-    if event.type == MOUSEBUTTONDOWN:        
-        if g.active_polygon.is_closing_point(event.pos):
->>>>>>> add0add (small changes):excercises/task5_polygon_drawing.py
             # Wir haben ein fertiges Polygon
             g.finished_polygons.append(g.active_polygon)
             g.active_polygon = Polygon(BLUE, GREEN)

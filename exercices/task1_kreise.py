@@ -3,7 +3,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from graphics2d import *
 
-
 # Diese Konstanten legen die Grösse des Grafikfensters fest
 WIDTH = 700
 HEIGHT = 700
@@ -12,18 +11,9 @@ HEIGHT = 700
 # request_redraw() aufrufen, wenn ein ein Update der Grafik benötigt wird.
 ALWAYS_REDRAW = False
 
-# Legt die maximale Framerate fest. Default ist 60.
-#MAX_FPS = 120
-
-# Legt fest, ob das Fenster im Fullscreen-Modus geöffnet wird. Default ist False.
-#FULLSCREEN = True
-
 # Legt fest, ob die Grösse des Fensters vom Benutzer verändert werden kann. Default ist False.
 RESIZABLE = True
 
-
-
-image = None
 
 def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
