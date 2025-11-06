@@ -29,11 +29,34 @@ class CanvasItem(SceneItem):
 
     def request_redraw(self):
         """
-        Call this to notify the SceneTree that this SceneItem needs to redraw itself.
+        Call this to notify the SceneTree that this CanvasItem needs to redraw itself.
+        
+        If this item has a CanvasItem parent, the redraw request is forwarded to the parent.
+        Otherwise, the tree is notified directly.
         """
-        tree = self.get_tree()
-        if tree:
-            tree.request_redraw(self)
+        parent = self.get_parent()
+        if isinstance(parent, CanvasItem):
+            parent.child_requests_redraw(self)
+        else:
+            tree = self.get_tree()
+            if tree:
+                tree.request_redraw(self)
+
+
+    def child_requests_redraw(self, child):
+        """
+        Called by a child CanvasItem to notify this item that the child needs to redraw itself.
+        By default, the request is forwarded up the tree (without adding ourselves to the 
+        redraw list).
+        """
+        parent = self.get_parent()
+        if isinstance(parent, CanvasItem):
+            parent.child_requests_redraw(child)
+        else:
+            tree = self.get_tree()
+            if tree:
+                tree.request_redraw(child)
+        
 
     def get_viewport_position(self):
         """
