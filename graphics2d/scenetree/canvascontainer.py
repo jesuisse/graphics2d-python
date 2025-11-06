@@ -20,6 +20,12 @@ class CanvasContainer(CanvasRectAreaItem):
     any of it, EXCEPT to send keyboard input to your CanvasItem directly if it has focus.
     """
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # stores the item that currently contains the mouse
+        self.item_containing_mouse = None
+
+
     def on_ready(self):
         self.layout()
         self.request_redraw()
@@ -107,14 +113,23 @@ class CanvasContainer(CanvasRectAreaItem):
         that contain the pointer. 
         """
         if is_pointer_event(event):            
-            pos = get_event_location(event)
-            if pos:                
+            pos = get_event_location(event)            
+            if pos:
+                has_mouse = None
                 for child in self.children:
                     viewport_pos = child.get_viewport_position()
                     r = Rect(viewport_pos, child.get_bbox().size)
                     if isinstance(child, CanvasRectAreaItem) and r.collidepoint(pos):
+                        has_mouse = child
                         child.on_gui_input(event)
                         break
+                if self.item_containing_mouse != has_mouse:
+                    if self.item_containing_mouse:
+                        self.item_containing_mouse.on_mouse_leave()
+                    self.item_containing_mouse = has_mouse
+                    if has_mouse:
+                        has_mouse.on_mouse_enter(event)
+                        
             else:
                 # we get here for MOUSEWHEEL events. What do we do with them?
                 pass

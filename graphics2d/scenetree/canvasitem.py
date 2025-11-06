@@ -201,6 +201,19 @@ class CanvasRectAreaItem(CanvasItem):
         """
         pass
 
+    def on_mouse_enter(self, event):
+        """
+        Callback is called when the mouse enters the bounding box of this item
+        """
+        pass
+
+    def on_mouse_leave(self):
+        """
+        Callback is called when the mouse leaves the bounding box of this item
+        """
+        pass
+    
+
 
 class CanvasColorRect(CanvasRectAreaItem):
     def __init__(self, **kwargs):
