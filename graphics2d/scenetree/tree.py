@@ -80,8 +80,9 @@ class SceneTree:
         """
         Notifies the scene tree that one of it's items needs a redraw.
         """
-        if isinstance(item, CanvasItem):
+        if isinstance(item, CanvasItem):            
             self.redraw_requests[item] = True
+            
 
     def request_redraw_all(self, start_node):
         """

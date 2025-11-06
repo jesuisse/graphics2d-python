@@ -121,6 +121,12 @@ class CanvasContainer(CanvasRectAreaItem):
 
         # keyboard events are sent to the focused CanvasItem by the framework. 
 
+    def child_requests_redraw(self, child):        
+        # We do not propagate child redraw requests up the tree, as we are responsible
+        # for handling their redrawing. We simply ask to be redrawn ourselves and will 
+        # then redraw (currently) all the children.
+        self.request_redraw()
+
 
 class BoxContainer(CanvasContainer):
 

@@ -142,14 +142,16 @@ def _event_loop():
         if needs_redraw or settings['ALWAYS_REDRAW']:
             drawn = True
             hooks['on_draw']()
-        if scene_tree.has_redraw_requests():
+        if scene_tree.has_redraw_requests() or settings['ALWAYS_REDRAW']:
             drawn = True
             size = Vector2(screen.get_size())
             _handle_scenetree_drawing(scene_tree.root, size)
         if drawn:
             _pygame.display.flip()
             needs_redraw = False
+            scene_tree.clear_redraw_requests()
         clock.tick(settings['MAX_FPS'])
+
 
 def _handle_window_resize(event):
     # set window size 'constants' to behave as students expect
@@ -161,7 +163,6 @@ def _handle_window_resize(event):
     _handle_scenetree_resize(event.w, event.h)
     scene_tree.request_redraw_all(scene_tree.root)
     request_redraw()
-
 
 
 def _handle_scenetree_resize(new_width, new_height):
@@ -178,7 +179,7 @@ def _handle_scenetree_drawing(node, size):
         for child in node.children:
             _handle_scenetree_drawing(child, size)
     
-    p = node.get_viewport_position()
+    p = node.get_viewport_position()    
     if not isinstance(node, CanvasItem) or (not settings['ALWAYS_REDRAW'] and node not in scene_tree.redraw_requests):
         # Either an item with no visual representation or no redraw request for this item
         return
