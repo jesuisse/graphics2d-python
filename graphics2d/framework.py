@@ -17,7 +17,7 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title', 'get_window_surface', 'get_scenetree', 'VarContainer', 
+    'set_window_title', 'get_window_surface', 'get_monitor_resolution', 'get_scenetree', 'listen', 'VarContainer', 
     'CanvasItem', 'CanvasRectAreaItem', 'PanelContainer', 'HBoxContainer', 'VBoxContainer'
     ]
 
@@ -73,12 +73,15 @@ needs_redraw = True
 auto_redraw = True
 is_fullscreen=False
 is_resizable=False
+mode_resolution=None
 
 _dirty_screen_rects = []
 
 def _init():
-    global clock, scene_tree
+    global clock, scene_tree, mode_resolution
     _pygame.init()
+    info = _pygame.display.Info()
+    mode_resolution = Vector2(info.current_w, info.current_h)
     icon = _pygame.image.load(os.path.join(_get_internal_asset_path(), "icon.png"))
     if not _icon_already_set:
         _pygame.display.set_icon(icon)
@@ -114,23 +117,31 @@ def _honor_display_mode_settings():
 
 def _event_loop():
     global needs_redraw
+    # currently we ignore these events
+    ignore = [_pygame.WINDOWMOVED, _pygame.ACTIVEEVENT, _pygame.WINDOWCLOSE, _pygame.WINDOWENTER, _pygame.WINDOWLEAVE,
+              _pygame.WINDOWRESIZED, _pygame.VIDEOEXPOSE, _pygame.WINDOWEXPOSED, _pygame.WINDOWSIZECHANGED]
     running = True
     last = datetime.datetime.now()
     while running:
         for event in _pygame.event.get():
-            if event.type == _pygame.QUIT:
+            if event.type in ignore:
+                continue
+            elif event.type == _pygame.QUIT:
                 running = False
             elif event.type == _pygame.VIDEORESIZE:
                _handle_window_resize(event)
-            elif scene_tree.has_active_modal():
-                modal = scene_tree.get_active_modal_node()
-                modal.on_input(event)
-                if isinstance(modal, CanvasRectAreaItem) and not scene_tree.event_consumed:
-                    modal.on_gui_input(event)
+               """
+               elif scene_tree.has_active_modal():
+                   modal = scene_tree.get_active_modal_node()
+                   modal.on_input(event)
+                   if isinstance(modal, CanvasRectAreaItem) and not scene_tree.event_consumed:                    
+                       modal.on_gui_input(event)
+               """
             else:
                 scene_tree.event_consumed = False
                 scene_tree.handle_input(event, scene_tree.root)
-                hooks['on_input'](event)
+                if not scene_tree.event_consumed:
+                    hooks['on_input'](event)
 
         now = datetime.datetime.now()
         dt = now-last
@@ -270,8 +281,24 @@ def get_runtime_in_msecs():
     """
     return _pygame.time.get_ticks()
 
+def get_monitor_resolution() -> Vector2:
+    return mode_resolution
+
+
 def get_scenetree():
     return scene_tree
+
+
+def listen(item: SceneItem, signal, callback):
+        """
+        Binds a listener callback to a signal from a scene item
+
+        The callback's first parameter is the SceneItem.
+        """
+        #TODO: We should probably use weakrefs for the callbacks!
+        if not signal in item.listeners:
+            item.listeners[signal] = []
+        item.listeners[signal].append(callback)
 
 def go():
     """

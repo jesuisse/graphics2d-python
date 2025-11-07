@@ -48,6 +48,7 @@ class SceneTree:
         self.modalstack.append(node)
     
     def grab_focus(self, node):
+        print(node.name, "grabbed focus")
         self.focused = node
 
     def release_focus(self, node):
@@ -69,6 +70,7 @@ class SceneTree:
     def clear_modal(self, node):
         if node in self.modalstack:
             self.modalstack.remove(node)
+            self.request_redraw_all(self.root)
 
     def has_redraw_requests(self):
         return len(self.redraw_requests) > 0
@@ -84,10 +86,12 @@ class SceneTree:
             self.redraw_requests[item] = True
             
 
-    def request_redraw_all(self, start_node):
+    def request_redraw_all(self, start_node = None):
         """
         This requests that the whole tree starting with start_node be redrawn
         """
+        if start_node is None:
+            start_node = self.root
         for node in self.depthfirst_postorder(start_node):
             if isinstance(node, CanvasItem):
                 self.redraw_requests[node] = True

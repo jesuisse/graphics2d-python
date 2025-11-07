@@ -1,17 +1,42 @@
 
 import weakref
 
+class Signal:
+    """
+    Small helper class to represent unique signals
+
+    Giving a signal a name might help with debugging, but has no other
+    purpose and provides no additional functionality.
+    """
+    signal_id = 0
+
+    def __init__(self, name, *args):
+        """
+        name will be stored with the instance. additional args are used
+        to document the signal callback arguments and will be ignored.
+        """
+        Signal.signal_id += 1
+        self.signal_id = Signal.signal_id
+        self.name = name
+
+    def __repr__(self):
+        return f"<signal {self.name}>"
+
+
+
 class SceneItem:
     """
     A SceneItem is any object that can live in the scene tree.
     """
-
+    
     def __init__(self, **kwargs):
         self.children = []      # Will hold references to all the children
         self.parent = None      # Will hold a weak reference to the parent
         self.tree = None        # Will hold a weak reference to the scene tree
         self._initialized = False # Flag to remember whether on_ready was already called. Managed by Tree.
         self.filtered_events = ()  # Will receive all events
+
+        self.listeners = {}
 
         if 'name' in kwargs:
             self.name = kwargs['name']
@@ -125,3 +150,23 @@ class SceneItem:
         tree = self.get_tree()
         if tree:
             tree.release_focus(self)
+
+    def emit(self, signal, *args, **kwargs):
+        """
+        Emits a signal
+        """
+        if not signal in self.listeners:
+            return
+        for listener in self.listeners[signal]:
+            print(self, "emitting", signal, "to", listener, "with args", args)
+            listener(self, *args, **kwargs)
+        
+    
+    def listen(self, item, signal, callback):
+        """
+        Binds a listener callback to a signal from a scene item        
+        """
+        #TODO: We should probably use weakrefs for the callbacks!
+        if not signal in item.listeners:
+            item.listeners[signal] = []
+        item.listeners[signal].append(callback)

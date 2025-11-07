@@ -1,6 +1,6 @@
-from graphics2d.scenetree.sceneitem import SceneItem
+from graphics2d.scenetree.sceneitem import SceneItem, Signal
 from graphics2d.scenetree.canvasitem import CanvasItem, CanvasRectAreaItem
-from graphics2d.events import is_pointer_event, get_event_location
+from graphics2d.events import is_pointer_event, get_event_location, is_focus_event
 from pygame.math import Vector2
 import pygame.locals as const
 from pygame import Rect, Surface
@@ -17,8 +17,11 @@ class CanvasContainer(CanvasRectAreaItem):
     If you add your CanvasItem to a CanvasContainer, however, the container will take care of
     distributing pointer input, positioning, sizing and drawing your CanvasItem. In effect, a CanvasContainer
     is fully responsible for whatever happens in it's own screen space. The framework will NOT handle
-    any of it, EXCEPT to send keyboard input to your CanvasItem directly if it has focus.
+    any of it, EXCEPT to send GUI keyboard input to your CanvasItem directly if it has focus.
     """
+
+    # signal resized(item: CanvasContainer, new_width, new_height)
+    resized = Signal("resized", "new_width", "new_height")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -33,6 +36,11 @@ class CanvasContainer(CanvasRectAreaItem):
     def on_resized(self, new_width, new_height):
         # This will set our size
         super().on_resized(new_width, new_height)
+        self.layout()
+        self.request_redraw()
+        self.emit(CanvasContainer.resized, new_width, new_height)
+    
+    def on_entered(self):
         self.layout()
         self.request_redraw()
 
@@ -111,7 +119,7 @@ class CanvasContainer(CanvasRectAreaItem):
         on_input mechanism hasn't consumed the event. The container then treates input
         according to type; mouse and touch events are sent only to CanvasRectAreaItem children
         that contain the pointer. 
-        """
+        """        
         if is_pointer_event(event):            
             pos = get_event_location(event)            
             if pos:
@@ -133,8 +141,13 @@ class CanvasContainer(CanvasRectAreaItem):
             else:
                 # we get here for MOUSEWHEEL events. What do we do with them?
                 pass
-
-        # keyboard events are sent to the focused CanvasItem by the framework. 
+        
+        elif is_focus_event(event):
+            # keyboard events are sent to the focused CanvasItem by the framework. So this
+            # code is usually not executed. 
+            print("DEADEND - focus event at the wrong destination")
+        else:
+            print(self.name, "received but won't handle", event)
 
     def child_requests_redraw(self, child):        
         # We do not propagate child redraw requests up the tree, as we are responsible
@@ -161,7 +174,6 @@ class BoxContainer(CanvasContainer):
         if 'separation' in kwargs:
             self.separation = kwargs['separation']
 
-
     def get_content_min_size(self):
         """
         Calculates the minimum size of the content
@@ -180,6 +192,7 @@ class BoxContainer(CanvasContainer):
         size[self.orientation] = min_primary_total + self.separation * (visible-1)
         size[1-self.orientation] = max_secondary
         return tuple(size)
+
 
     def layout(self):
         """
@@ -216,7 +229,10 @@ class BoxContainer(CanvasContainer):
         leftover = self.size[orientation]
         if not unconstrained and leftover - max_total - (self.separation)*(visible_count-1) > 0:
             # all children are maxed out and we have space availabe. Calc separator
-            separation_gap = (leftover - max_total) / (visible_count-1)
+            if visible_count == 1:
+                separation_gap = leftover - max_total
+            else:
+                separation_gap = (leftover - max_total) / (visible_count-1)
         else:
             separation_gap = self.separation
 
@@ -269,8 +285,8 @@ class BoxContainer(CanvasContainer):
             # might not work because we're not in the tree yet, possibly...
             if self.get_tree():
                 child.request_redraw()
-            
 
+        
 
     def _layout_along_secondary_axis(self, child, minsize, maxsize):
         orientation = self.orientation
