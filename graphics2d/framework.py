@@ -195,16 +195,18 @@ def _handle_scenetree_drawing(node, size):
         for child in node.children:
             _handle_scenetree_drawing(child, size)
     
-    p = node.get_viewport_position()    
+     
     if not isinstance(node, CanvasItem) or (not settings['ALWAYS_REDRAW'] and node not in scene_tree.redraw_requests):
         # Either an item with no visual representation or no redraw request for this item
         return
     elif isinstance(node, CanvasRectAreaItem):
+        p = node.get_viewport_position()  
         if p[0] > size[0] or p[1] > size[1] or p[0] + node.size[0] < 0 or p[1] + node.size[1] < 0:
             # don't bother drawing as the item is outside the visible area
             return
         clip_size = (max(0, min(node.size[0], size.x-p.x)), max(0, min(node.size[1], size.y-p.y)))
     else:
+        p = node.get_viewport_position()  
         clip_size = (max(0, size.x - p.x), max(0, size.y - p.y))
 
     r = _pygame.Rect(p, clip_size)
