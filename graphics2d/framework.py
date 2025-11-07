@@ -17,8 +17,8 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title', 'get_window_surface', 'get_monitor_resolution', 'get_scenetree', 'listen', 'VarContainer', 
-    'CanvasItem', 'CanvasRectAreaItem', 'PanelContainer', 'HBoxContainer', 'VBoxContainer'
+    'set_window_title', 'get_window_surface', 'get_monitor_resolution', 'get_scenetree', 'listen', 
+    'defer_to_next_frame', 'VarContainer', 'CanvasItem', 'CanvasRectAreaItem', 'PanelContainer', 'HBoxContainer', 'VBoxContainer'
     ]
 
 import sys
@@ -76,6 +76,7 @@ is_resizable=False
 mode_resolution=None
 
 _dirty_screen_rects = []
+_defered_calls = []
 
 def _init():
     global clock, scene_tree, mode_resolution
@@ -123,6 +124,10 @@ def _event_loop():
     running = True
     last = datetime.datetime.now()
     while running:
+        for callable in _defered_calls:
+            callable()
+        _defered_calls.clear()
+
         for event in _pygame.event.get():
             if event.type in ignore:
                 continue
@@ -299,6 +304,12 @@ def listen(item: SceneItem, signal, callback):
         if not signal in item.listeners:
             item.listeners[signal] = []
         item.listeners[signal].append(callback)
+
+def defer_to_next_frame(callable):
+    """
+    Takes a callable and executes it at the beginning of the next frame    
+    """
+    _defered_calls.append(callable)
 
 def go():
     """
