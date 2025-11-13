@@ -30,6 +30,7 @@ import datetime
 import os.path
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem, CanvasContainer, PanelContainer, HBoxContainer, VBoxContainer
 from graphics2d.events import is_focus_event, is_pointer_event
+from graphics2d.scenetree.notification import Notification, listen
 
 class VarContainer:
     """
@@ -295,17 +296,6 @@ def get_monitor_resolution() -> Vector2:
 def get_scenetree():
     return scene_tree
 
-
-def listen(item: SceneItem, signal, callback):
-        """
-        Binds a listener callback to a signal from a scene item
-
-        The callback's first parameter is the SceneItem.
-        """
-        #TODO: We should probably use weakrefs for the callbacks!
-        if not signal in item.listeners:
-            item.listeners[signal] = []
-        item.listeners[signal].append(callback)
 
 def defer_to_next_frame(callable):
     """

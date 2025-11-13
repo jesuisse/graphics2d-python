@@ -9,6 +9,7 @@ class Label(CanvasRectAreaItem):
     """
 
     def __init__(self, **kwargs):
+        
         super().__init__(**kwargs)
 
         if 'text' in kwargs:
@@ -21,29 +22,44 @@ class Label(CanvasRectAreaItem):
         else:
             self.font = get_font(get_default_fontname())
 
-        self.size = _draw.get_text_size(self.font, self.text)
-
         if "color" in kwargs:
             self.color = kwargs['color']
         else:
             self.color =  Color(120, 120, 120)
 
-        self.size = _draw.get_text_size(self.font, self.text)
-        
-        if not "min_size" in kwargs:
-            self.min_size = Vector2(self.size)
-        if not "max_size" in kwargs:
-            self.max_size = Vector2(self.size)
+        if "bgcolor" in kwargs:
+            self.bgcolor = kwargs['bgcolor']
+        else:
+            self.bgcolor = Color(255, 0, 255)
 
+        if "size" not in kwargs:
+            self.size = list(self.get_content_min_size())
+                
+        if "min_size" not in kwargs:
+            self.min_size = (None, None)
+        if "max_size" not in kwargs:
+            self.max_size = (None, None)
 
-    def on_draw(self, surface):
-        pos = Vector2(0, 0)
-        rendered_text = _draw.draw_text(self.font, self.text, self.color, antialias=True)
+    @property 
+    def text(self):
+        return self.__text
+    
+    @text.setter
+    def text(self, new_text):
+        self.__text = new_text        
+        self.size = self.get_content_min_size()        
+        self.request_redraw()
+    
+    def get_content_min_size(self):
+        if hasattr(self, "font"):
+            s = _draw.get_text_size(self.font, self.__text)
+            return (s[0], s[1])
+
+    def on_draw(self, surface):        
+        pos = Vector2(0, 0)        
+        rendered_text = _draw.draw_text(self.font, self.__text, self.color, antialias=True)
+        h = rendered_text.get_height()        
+        pos = Vector2(0, (self.size[1]-h)/2.0)
+        surface.fill(self.bgcolor)
         surface.blit(rendered_text, pos)
     
-    def set_text(self, text):
-        self.text = text        
-        self.size = _draw.get_text_size(self.font, self.text)
-        self.min_size = (self.size[0], self.size[1])
-
-        self.request_redraw()

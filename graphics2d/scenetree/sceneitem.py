@@ -1,27 +1,6 @@
+from graphics2d.scenetree.notification import Notification
 
 import weakref
-
-class Signal:
-    """
-    Small helper class to represent unique signals
-
-    Giving a signal a name might help with debugging, but has no other
-    purpose and provides no additional functionality.
-    """
-    signal_id = 0
-
-    def __init__(self, name, *args):
-        """
-        name will be stored with the instance. additional args are used
-        to document the signal callback arguments and will be ignored.
-        """
-        Signal.signal_id += 1
-        self.signal_id = Signal.signal_id
-        self.name = name
-
-    def __repr__(self):
-        return f"<signal {self.name}>"
-
 
 
 class SceneItem:
@@ -151,22 +130,22 @@ class SceneItem:
         if tree:
             tree.release_focus(self)
 
-    def emit(self, signal, *args, **kwargs):
+    def emit(self, notification: Notification, *args, **kwargs):
         """
         Emits a signal
         """
-        if not signal in self.listeners:
+        if not notification in self.listeners:
             return
-        for listener in self.listeners[signal]:
-            print(self, "emitting", signal, "to", listener, "with args", args)
+        for listener in self.listeners[notification]:
+            print(self, "emitting", notification, "to", listener, "with args", args)
             listener(self, *args, **kwargs)
         
     
-    def listen(self, item, signal, callback):
+    def listen(self, item: 'SceneItem', notification: Notification, callback):
         """
-        Binds a listener callback to a signal from a scene item        
+        Binds a listener callback to a notification from a scene item        
         """
         #TODO: We should probably use weakrefs for the callbacks!
-        if not signal in item.listeners:
-            item.listeners[signal] = []
-        item.listeners[signal].append(callback)
+        if not notification in item.listeners:
+            item.listeners[notification] = []
+        item.listeners[notification].append(callback)

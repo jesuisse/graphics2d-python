@@ -3,7 +3,6 @@ from pygame.math import Vector2
 from pygame import Color, Rect
 import pygame.draw as draw
 
-
 # Note on internal implementation of drawing: The framework will reach into each CanvasItem object and
 # set the *private* _draw_surface* member before calling on_draw, and set it to None afterwards. So you
 # can ONLY draw in on_draw.
@@ -24,6 +23,11 @@ class CanvasItem(SceneItem):
         else:
             self.position = Vector2(0, 0)
 
+        if 'theme' in kwargs:
+            self.theme = kwargs['theme']
+        else:
+            self.theme = None
+        
         # This will be set by the framework from the outside when calling the on_draw callback!!!
         self._draw_surface = None
 
@@ -142,11 +146,11 @@ class CanvasItem(SceneItem):
 
 
 class CanvasRectAreaItem(CanvasItem):
-
-    ALIGN_START = 1
-    ALIGN_CENTERED = 2
-    ALIGN_END = 4
-
+    """
+    This is an item with a visual representation that covers a rectangular
+    area on the screen. CanvasRectAreaItems can participate in GUI layouting
+    containers.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.size = Vector2(0, 0)
@@ -181,13 +185,20 @@ class CanvasRectAreaItem(CanvasItem):
         return self.weight_ratio
 
     def get_min_size(self):
-        return self.min_size
+        c = self.get_content_min_size()
+        w = c[0] if self.min_size[0] is None else self.min_size[0]
+        h = c[1] if self.min_size[1] is None else self.min_size[1]
+        return (max(c[0], w), max(c[1], h))
 
     def get_max_size(self):
         return self.max_size
 
     def get_bbox(self):
         return Rect(self.position, self.size)
+
+    def get_content_min_size(self):
+        # By default, the content has no inherent size.
+        return (0, 0)
 
     def on_resized(self, new_width, new_height):
         self.size[0] = new_width
@@ -222,6 +233,7 @@ class CanvasColorRect(CanvasRectAreaItem):
             self.color = kwargs['color']
         else:
             self.color = Color(255, 0, 255)
+   
 
     def on_draw(self, draw_surface):
         draw_surface.fill(self.color)
