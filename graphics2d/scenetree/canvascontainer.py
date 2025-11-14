@@ -146,7 +146,8 @@ class CanvasContainer(CanvasRectAreaItem):
         elif is_focus_event(event):
             # keyboard events are sent to the focused CanvasItem by the framework. So this
             # code is usually not executed. 
-            print("DEADEND - focus event at the wrong destination")
+            pass
+            #print("DEADEND - focus event at the wrong destination")
         else:
             print(self.name, "received but won't handle", event)
 
