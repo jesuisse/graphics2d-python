@@ -137,7 +137,7 @@ class SceneItem:
         if not notification in self.listeners:
             return
         for listener in self.listeners[notification]:
-            print(self, "emitting", notification, "to", listener, "with args", args)
+            #print(self, "emitting", notification, "to", listener, "with args", args)
             listener(self, *args, **kwargs)
         
     
