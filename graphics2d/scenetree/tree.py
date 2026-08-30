@@ -48,6 +48,7 @@ class SceneTree:
         self.modalstack.append(node)
     
     def grab_focus(self, node):
+        print(node.name, "grabbed focus")
         self.focused = node
 
     def release_focus(self, node):
@@ -69,6 +70,7 @@ class SceneTree:
     def clear_modal(self, node):
         if node in self.modalstack:
             self.modalstack.remove(node)
+            self.request_redraw_all(self.root)
 
     def has_redraw_requests(self):
         return len(self.redraw_requests) > 0
@@ -80,13 +82,16 @@ class SceneTree:
         """
         Notifies the scene tree that one of it's items needs a redraw.
         """
-        if isinstance(item, CanvasItem):
+        if isinstance(item, CanvasItem):            
             self.redraw_requests[item] = True
+            
 
-    def request_redraw_all(self, start_node):
+    def request_redraw_all(self, start_node = None):
         """
         This requests that the whole tree starting with start_node be redrawn
         """
+        if start_node is None:
+            start_node = self.root
         for node in self.depthfirst_postorder(start_node):
             if isinstance(node, CanvasItem):
                 self.redraw_requests[node] = True
@@ -202,43 +207,56 @@ class SceneTree:
         """
         for item in self.depthfirst_postorder():        
             item.on_update(dt)
-
+   
 
     def handle_input(self, event, node):
-        """
-        Handles input events for the scene tree starting at node
-        """
+        # First phase - every node receives the event via on_input() 
+        # until a node consumes it.
+        self.handle_input_on_input(event, node)
+        # In the second phase, we send the event to on_gui_input()
+        self.handle_input_on_gui_input(event, node)
+        # TODO: Implement the third phase to handle unhandled events
+        # via on_unhandled_input()
+            
 
+    def handle_input_on_input(self, event, node):
+
+        # send event to all the children
+        for child in node.children:
+            self.handle_input_on_input(event, child)
+            if self.event_consumed:
+                return
+
+        # send event to node's on_input callback
+        if isinstance(node, CanvasItem): 
+            node.on_input(event)
+            if self.event_consumed:
+                return        
+
+
+    def handle_input_on_gui_input(self, event, node):
         if is_focus_event(event):
             # focus events are only sent to the currently focused item
             # this is most likely wrong: all on_input callbacks should receive them
             if self.focused:
-                self.focused.on_input(event)
-                if isinstance(self.focused, CanvasRectAreaItem) and not self.event_consumed:
+                if isinstance(self.focused, CanvasRectAreaItem):
                     self.focused.on_gui_input(event)
                 
                 # do not send this event to other items in the tree
                 return
 
         if isinstance(node, CanvasContainer):
-            node.on_input(event)
-            if self.event_consumed:
-                return
             node.on_gui_input(event)        
         else:
             # send event to all the children
             for child in node.children:
-                self.handle_input(event, child)
+                self.handle_input_on_gui_input(event, child)
                 if self.event_consumed:
                     return
-
-            # send event to node's on_input callback
-            if isinstance(node, CanvasItem): 
-                node.on_input(event)
-                if self.event_consumed:
-                    return        
-            
+             
             # if event wasn't handled, send it to node's on_gui_input
             if isinstance(node, CanvasRectAreaItem):
                 node.on_gui_input(event)
+
+
 

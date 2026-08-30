@@ -1,17 +1,21 @@
+from graphics2d.scenetree.notification import Notification
 
 import weakref
+
 
 class SceneItem:
     """
     A SceneItem is any object that can live in the scene tree.
     """
-
+    
     def __init__(self, **kwargs):
         self.children = []      # Will hold references to all the children
         self.parent = None      # Will hold a weak reference to the parent
         self.tree = None        # Will hold a weak reference to the scene tree
         self._initialized = False # Flag to remember whether on_ready was already called. Managed by Tree.
         self.filtered_events = ()  # Will receive all events
+
+        self.listeners = {}
 
         if 'name' in kwargs:
             self.name = kwargs['name']
@@ -125,3 +129,23 @@ class SceneItem:
         tree = self.get_tree()
         if tree:
             tree.release_focus(self)
+
+    def emit(self, notification: Notification, *args, **kwargs):
+        """
+        Emits a signal
+        """
+        if not notification in self.listeners:
+            return
+        for listener in self.listeners[notification]:
+            #print(self, "emitting", notification, "to", listener, "with args", args)
+            listener(self, *args, **kwargs)
+        
+    
+    def listen(self, item: 'SceneItem', notification: Notification, callback):
+        """
+        Binds a listener callback to a notification from a scene item        
+        """
+        #TODO: We should probably use weakrefs for the callbacks!
+        if not notification in item.listeners:
+            item.listeners[notification] = []
+        item.listeners[notification].append(callback)

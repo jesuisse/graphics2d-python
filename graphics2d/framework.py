@@ -17,8 +17,8 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title', 'get_window_surface', 'get_scenetree', 'VarContainer', 
-    'CanvasItem', 'CanvasRectAreaItem', 'PanelContainer', 'HBoxContainer', 'VBoxContainer'
+    'set_window_title', 'get_window_surface', 'get_monitor_resolution', 'get_scenetree', 'listen', 
+    'defer_to_next_frame', 'VarContainer', 'CanvasItem', 'CanvasRectAreaItem', 'PanelContainer', 'HBoxContainer', 'VBoxContainer'
     ]
 
 import sys
@@ -30,6 +30,7 @@ import datetime
 import os.path
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem, CanvasContainer, PanelContainer, HBoxContainer, VBoxContainer
 from graphics2d.events import is_focus_event, is_pointer_event
+from graphics2d.scenetree.notification import Notification, listen
 
 class VarContainer:
     """
@@ -73,12 +74,16 @@ needs_redraw = True
 auto_redraw = True
 is_fullscreen=False
 is_resizable=False
+mode_resolution=None
 
 _dirty_screen_rects = []
+_defered_calls = []
 
 def _init():
-    global clock, scene_tree
+    global clock, scene_tree, mode_resolution
     _pygame.init()
+    info = _pygame.display.Info()
+    mode_resolution = Vector2(info.current_w, info.current_h)
     icon = _pygame.image.load(os.path.join(_get_internal_asset_path(), "icon.png"))
     if not _icon_already_set:
         _pygame.display.set_icon(icon)
@@ -114,23 +119,35 @@ def _honor_display_mode_settings():
 
 def _event_loop():
     global needs_redraw
+    # currently we ignore these events
+    ignore = [_pygame.WINDOWMOVED, _pygame.ACTIVEEVENT, _pygame.WINDOWCLOSE, _pygame.WINDOWENTER, _pygame.WINDOWLEAVE,
+              _pygame.WINDOWRESIZED, _pygame.VIDEOEXPOSE, _pygame.WINDOWEXPOSED, _pygame.WINDOWSIZECHANGED]
     running = True
     last = datetime.datetime.now()
     while running:
+        for callable in _defered_calls:
+            callable()
+        _defered_calls.clear()
+
         for event in _pygame.event.get():
-            if event.type == _pygame.QUIT:
+            if event.type in ignore:
+                continue
+            elif event.type == _pygame.QUIT:
                 running = False
             elif event.type == _pygame.VIDEORESIZE:
                _handle_window_resize(event)
-            elif scene_tree.has_active_modal():
-                modal = scene_tree.get_active_modal_node()
-                modal.on_input(event)
-                if isinstance(modal, CanvasRectAreaItem) and not scene_tree.event_consumed:
-                    modal.on_gui_input(event)
+               """
+               elif scene_tree.has_active_modal():
+                   modal = scene_tree.get_active_modal_node()
+                   modal.on_input(event)
+                   if isinstance(modal, CanvasRectAreaItem) and not scene_tree.event_consumed:                    
+                       modal.on_gui_input(event)
+               """
             else:
                 scene_tree.event_consumed = False
                 scene_tree.handle_input(event, scene_tree.root)
-                hooks['on_input'](event)
+                if not scene_tree.event_consumed:
+                    hooks['on_input'](event)
 
         now = datetime.datetime.now()
         dt = now-last
@@ -142,14 +159,16 @@ def _event_loop():
         if needs_redraw or settings['ALWAYS_REDRAW']:
             drawn = True
             hooks['on_draw']()
-        if scene_tree.has_redraw_requests():
+        if scene_tree.has_redraw_requests() or settings['ALWAYS_REDRAW']:
             drawn = True
             size = Vector2(screen.get_size())
             _handle_scenetree_drawing(scene_tree.root, size)
         if drawn:
             _pygame.display.flip()
             needs_redraw = False
+            scene_tree.clear_redraw_requests()
         clock.tick(settings['MAX_FPS'])
+
 
 def _handle_window_resize(event):
     # set window size 'constants' to behave as students expect
@@ -161,7 +180,6 @@ def _handle_window_resize(event):
     _handle_scenetree_resize(event.w, event.h)
     scene_tree.request_redraw_all(scene_tree.root)
     request_redraw()
-
 
 
 def _handle_scenetree_resize(new_width, new_height):
@@ -178,16 +196,18 @@ def _handle_scenetree_drawing(node, size):
         for child in node.children:
             _handle_scenetree_drawing(child, size)
     
-    p = node.get_viewport_position()
+     
     if not isinstance(node, CanvasItem) or (not settings['ALWAYS_REDRAW'] and node not in scene_tree.redraw_requests):
         # Either an item with no visual representation or no redraw request for this item
         return
     elif isinstance(node, CanvasRectAreaItem):
+        p = node.get_viewport_position()  
         if p[0] > size[0] or p[1] > size[1] or p[0] + node.size[0] < 0 or p[1] + node.size[1] < 0:
             # don't bother drawing as the item is outside the visible area
             return
         clip_size = (max(0, min(node.size[0], size.x-p.x)), max(0, min(node.size[1], size.y-p.y)))
     else:
+        p = node.get_viewport_position()  
         clip_size = (max(0, size.x - p.x), max(0, size.y - p.y))
 
     r = _pygame.Rect(p, clip_size)
@@ -269,8 +289,19 @@ def get_runtime_in_msecs():
     """
     return _pygame.time.get_ticks()
 
+def get_monitor_resolution() -> Vector2:
+    return mode_resolution
+
+
 def get_scenetree():
     return scene_tree
+
+
+def defer_to_next_frame(callable):
+    """
+    Takes a callable and executes it at the beginning of the next frame    
+    """
+    _defered_calls.append(callable)
 
 def go():
     """
