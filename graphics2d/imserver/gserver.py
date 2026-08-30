@@ -17,6 +17,7 @@ class GraphicsServer:
         renderer = self.pygame._sdl2.video.Renderer(window)
         self.renderers.append(renderer)
         self.windows[window.id] = [window, renderer, bgcolor]
+        self.clear_window(window.id)
 
     def get_desktop_sizes(self):
         return self.pygame.display.get_desktop_sizes()

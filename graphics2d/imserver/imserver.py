@@ -21,7 +21,8 @@ sys.path.append(os.path.join(sys.path[0], "../.."))
 
 def run_interactive_media_server(receive, send):
     # Explicitly set X11 environment parameters
-    os.environ["SDL_VIDEODRIVER"] = "x11"
+    # Only works on linux platform
+    #os.environ["SDL_VIDEODRIVER"] = "x11"
     
     # Import Pygame strictly inside the child process
     import pygame
@@ -31,19 +32,10 @@ def run_interactive_media_server(receive, send):
     pygame.init()
 
     gserver = GraphicsServer(pygame)
+        
+    gserver.add_window(Window("Main Window", size=(700, 700), resizable=True))
+    gserver.add_window(Window("Tools", size=(350, 700), resizable=False), bgcolor=(35, 35, 35, 200))
     
-    win1 = Window("Main Window", size=(600, 600), resizable=True)
-    win2 = Window("Tools", size=(300, 600), resizable=False)
-
-    gserver.add_window(win1)
-    gserver.add_window(win2, bgcolor=(35, 35, 35))
-
-    mainrenderer = gserver.get_renderer(win1.id)
-    toolrenderer = gserver.get_renderer(win2.id)
-
-    gserver.clear_window(win1.id)
-    gserver.clear_window(win2.id)
-
     print("[CHILD] Window created. Move mouse or press keys over the window...")
     
     clock = pygame.time.Clock()
@@ -64,15 +56,6 @@ def run_interactive_media_server(receive, send):
                 else:
                     d['window'] = None
             
-            if event.type == pygame.QUIT:                
-                send.put("QUIT")
-            elif event.type == pygame.WINDOWCLOSE and event.window == win1.id:             
-                send.put("QUIT")                     
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                    send.put("QUIT")
-
             # send event to parent process
             send.put([event.type, d])
         
@@ -87,7 +70,8 @@ def run_interactive_media_server(receive, send):
         gserver.run_defered()
         
         clock.tick(60)
-        
+
+    send.put("QUIT")
     pygame.quit()
     print("interactive media server exiting...")
 
@@ -128,7 +112,8 @@ if __name__ == "__main__":
                 print(f"[PARENT] Received: DROPFILE | {msg[1]}")
             if msg[0] == pygame.constants.DROPTEXT:
                 print(f"[PARENT] Received: DROPTEXT | {msg[1]}")
-                           
+
+    
             
     print("Parent exiting...")
     process.join()
