@@ -1,6 +1,6 @@
 import struct
 
-from graphics2d.gserver import GraphicsServer
+from graphics2d.imserver.gserver import GraphicsServer
 
 
 class ServerCommand:
