@@ -17,9 +17,22 @@ sys.path.append(os.path.join(sys.path[0], "../.."))
 
 # DO NOT IMPORT PYGAME HERE AT THE TOP LEVEL
 
+class IPCQueueConnection:
+    def __init__(self, send, recv):
+        self._send = send
+        self._recv = recv
+
+    def send(self, data):
+        self._send.put(data)
+
+    def has_received_data(self) -> bool:
+        return not self._recv.empty()
+
+    def receive(self):
+        return self._recv.get()
 
 
-def run_interactive_media_server(receive, send):
+def run_interactive_media_server(connection):
     # Explicitly set X11 environment parameters
     # Only works on linux platform
     #os.environ["SDL_VIDEODRIVER"] = "x11"
@@ -57,13 +70,13 @@ def run_interactive_media_server(receive, send):
                     d['window'] = None
             
             # send event to parent process
-            send.put([event.type, d])
+            connection.send([event.type, d])
         
         # Here we receive commands from the parent process and handle them accordingly
-        while not receive.empty():
-            item = receive.get()
+        while connection.has_received_data():
+            item = connection.receive()
             print(f"[CHILD] Received item: {item}")
-            send.put(f"Processed item: {item}")
+            connection.send(f"Processed item: {item}")
       
 
         gserver.present_all()
@@ -71,9 +84,20 @@ def run_interactive_media_server(receive, send):
         
         clock.tick(60)
 
-    send.put("QUIT")
+    connection.send("QUIT")
     pygame.quit()
     print("interactive media server exiting...")
+
+
+def start_ipc_server(server_func):
+    # Create the queued data exchange connection
+    send = mp.Queue()
+    receive = mp.Queue()
+    conn = IPCQueueConnection(send, receive)
+    server_conn = IPCQueueConnection(receive, send)
+    process = mp.Process(target=server_func, args=(server_conn,))
+    process.start()
+    return process, conn    
 
 
 if __name__ == "__main__":
@@ -82,19 +106,16 @@ if __name__ == "__main__":
 
     import pygame.constants
 
-    send = mp.Queue()
-    receive = mp.Queue()
-        
-    process = mp.Process(target=run_interactive_media_server, args=(send, receive))
-    process.start()
+    process, conn = start_ipc_server(run_interactive_media_server)
+
     running = True
     while running:
         # limit rate at which we check for messages from the child process
         time.sleep(0.01)
 
         # These are events happening in the child process/pygame we get informed about
-        while not receive.empty():
-            msg = receive.get()
+        while conn.has_received_data():
+            msg = conn.receive()
             if msg == "QUIT":
                 running = False
                 break
@@ -112,7 +133,6 @@ if __name__ == "__main__":
                 print(f"[PARENT] Received: DROPFILE | {msg[1]}")
             if msg[0] == pygame.constants.DROPTEXT:
                 print(f"[PARENT] Received: DROPTEXT | {msg[1]}")
-
     
             
     print("Parent exiting...")
