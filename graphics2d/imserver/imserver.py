@@ -32,6 +32,26 @@ class IPCQueueConnection:
         return self._recv.get()
 
 
+class EventBus:
+    def __init__(self):
+        self.futures = {}
+
+    async def wait_for(self, event_id):
+        future = self.futures.get(event_id)
+        if future is None:
+            future = asyncio.get_running_loop().create_future()
+            self.futures[event_id] = future
+        return await future
+
+    def publish(self, event_id, data):
+        future = self.futures.pop(event_id, None)
+        if future is None:
+            future = asyncio.get_running_loop().create_future()
+            self.futures[event_id] = future
+        future.set_result(data)
+        
+
+
 def run_interactive_media_server(connection):
     # Explicitly set X11 environment parameters
     # Only works on linux platform
@@ -44,35 +64,30 @@ def run_interactive_media_server(connection):
 
     pygame.init()
 
-    gserver = GraphicsServer(pygame)
+    eventbus = EventBus()
+
+    gserver = GraphicsServer(pygame, eventbus)
         
     gserver.add_window(Window("Main Window", size=(700, 700), resizable=True))
-    gserver.add_window(Window("Tools", size=(350, 700), resizable=False), bgcolor=(35, 35, 35, 200))
-    
-    print("[CHILD] Window created. Move mouse or press keys over the window...")
-    
+    gserver.add_window(Window("Log", size=(350, 700), resizable=False), bgcolor=(35, 35, 35, 200))
+           
     clock = pygame.time.Clock()
-    running = True
-    
+      
     while not gserver.exit_requested():        
         pygame.event.pump()
         
         for event in pygame.event.get():
-            print(f"[EVENT] Type: {pygame.event.event_name(event.type)} | {event.dict}")
+            #print(f"[EVENT] Type: {pygame.event.event_name(event.type)} | {event.dict}")
 
-            gserver.handle_pygame_event(event)
-                        
-            d = event.dict
-            if "window" in d:
-                if d["window"] is not None:
-                    d["window"] = d['window'].id
-                else:
-                    d['window'] = None
+            handled = gserver.handle_pygame_event(event)
+
+            if not handled:           
+                data = gserver.serialize_event(event)
             
-            # send event to parent process
-            connection.send([event.type, d])
+                # send event to parent process for handling
+                connection.send([event.type, data])
         
-        # Here we receive commands from the parent process and handle them accordingly
+        # Here we receive commands from the client and handle them accordingly
         while connection.has_received_data():
             item = connection.receive()
             print(f"[CHILD] Received item: {item}")
@@ -100,14 +115,9 @@ def start_ipc_server(server_func):
     return process, conn    
 
 
-if __name__ == "__main__":
-    # Force spawn method on Linux
-    mp.set_start_method("spawn", force=True)
 
-    import pygame.constants
-
-    process, conn = start_ipc_server(run_interactive_media_server)
-
+def client_event_loop(conn : IPCQueueConnection):
+    
     running = True
     while running:
         # limit rate at which we check for messages from the child process
@@ -134,6 +144,18 @@ if __name__ == "__main__":
             if msg[0] == pygame.constants.DROPTEXT:
                 print(f"[PARENT] Received: DROPTEXT | {msg[1]}")
     
-            
-    print("Parent exiting...")
+
+
+
+if __name__ == "__main__":
+    # Force spawn method on Linux
+    mp.set_start_method("spawn", force=True)
+
+    import pygame.constants
+
+    process, conn = start_ipc_server(run_interactive_media_server)
+
+    client_event_loop(conn)
+                
+    print("Client exiting...")
     process.join()
