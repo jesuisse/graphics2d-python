@@ -1,20 +1,28 @@
-
-
+import pygame
+from pygame._sdl2.video import Window, Renderer, Texture
  
 import pygame.locals as pyconst
 
-pygame = None
-
-
 class GraphicsServer:
-    def __init__(self, pygame_module):  
-        global pygame      
-        pygame = pygame_module        
+    def __init__(self):  
         self.windows = {}
         self.renderers = []
         self.defered_calls = []
         self._exit_requested = False
         self.main_window_id = None
+        # Explicitly set X11 environment parameters
+        # Only works on linux platform. Possibly re-add this
+        # later if there are issues with pygame on linux. 
+        # For now, we will assume that the user has a working X11
+        # environment.
+        #os.environ["SDL_VIDEODRIVER"] = "x11"
+        pygame.init()
+        self.clock = pygame.time.Clock()
+
+        # Open two windows: one for the main content, and one for logging
+        self.add_window(Window("Main Window", size=(700, 700), resizable=True))
+        self.add_window(Window("Log", size=(350, 700), resizable=False), bgcolor=(35, 35, 35, 200))
+            
             
     def add_window(self, window, bgcolor=(255, 0, 255)):
         if self.main_window_id is None:
@@ -23,6 +31,14 @@ class GraphicsServer:
         self.renderers.append(renderer)
         self.windows[window.id] = [window, renderer, bgcolor]
         self.clear_window(window.id)
+
+    def get_clock(self):
+        return self.clock
+
+    ## Returns a list of all events that have occurred since the last call to this function
+    def get_events(self):
+        pygame.event.pump()
+        return pygame.event.get()
 
     def get_desktop_sizes(self):
         return self.pygame.display.get_desktop_sizes()
@@ -53,17 +69,23 @@ class GraphicsServer:
         for renderer in self.renderers:
             renderer.present()
 
+    def quit(self):
+        pygame.quit()
+
     def handle_pygame_event(self, event) -> int:
         if event.type == pygame.QUIT:
             self._exit_requested = True
+            return True
         elif event.type == pygame.WINDOWCLOSE:
             if event.window.id == self.main_window_id:
                 self._exit_requested = True
+                return True
             else:
-                self.add_defered(lambda: self.remove_window(event.window))
+                self.call_defered(lambda: self.remove_window(event.window))
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self._exit_requested = True
+                return True
         elif event.type == pyconst.WINDOWSIZECHANGED:
             print("Window changed: ", event.window.id)
             self.clear_window(event.window.id)
@@ -78,7 +100,7 @@ class GraphicsServer:
         return self._exit_requested
 
 
-    def add_defered(self, function):
+    def call_defered(self, function):
         self.defered_calls.append(function)
     
     def run_defered(self):
