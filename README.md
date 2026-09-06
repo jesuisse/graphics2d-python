@@ -13,6 +13,16 @@ The shortest graphics program looks like this:
 
     go()
 
+And here's one which animates the circle's color:
+
+    from graphics2d import *
+    
+    def on_draw():
+        color = pick_one_of(BLUE, RED, YELLOW, GREEN, WHITE)
+        draw_circle((250, 250), 100, color, 2)
+
+    go()
+
 
 
 
