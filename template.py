@@ -30,7 +30,7 @@ HEIGHT = 500
 
 def on_draw():
     # Wird aufgerufen, um den Inhalt des Grafikfensters neu zu zeichnen
-    pass
+    draw_circle((WIDTH/2, HEIGHT/2), 100, RED, 2)
 
 def on_update(dt):
     # Wird so oft wie möglich aufgerufen, aber maximal MAX_FPS mal pro Sekunde. dt gibt die Anzahl Millisekunden seit
