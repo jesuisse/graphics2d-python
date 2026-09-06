@@ -17,8 +17,9 @@ go()
 
 __all__ = [
     'go', 'request_redraw', 'get_runtime_in_msecs', 'get_window_size', 'get_window_width', 'get_window_height',
-    'set_window_title', 'get_window_surface', 'get_monitor_resolution', 'get_scenetree', 'listen', 
-    'defer_to_next_frame', 'VarContainer', 'CanvasItem', 'CanvasRectAreaItem', 'PanelContainer', 'HBoxContainer', 'VBoxContainer'
+    'set_window_title', 'get_window_surface', 'get_monitor_resolution', 'get_scenetree', 'listen', 'pick_one_of',
+    'pick_integer_between', 'defer_to_next_frame', 'VarContainer', 'CanvasItem', 'CanvasRectAreaItem',    
+    'PanelContainer', 'HBoxContainer', 'VBoxContainer'
     ]
 
 import sys
@@ -27,6 +28,7 @@ import pygame as _pygame
 import pygame.locals as const
 from pygame.math import Vector2
 import datetime
+import random
 import os.path
 from graphics2d.scenetree import SceneTree, SceneItem, CanvasItem, CanvasRectAreaItem, CanvasContainer, PanelContainer, HBoxContainer, VBoxContainer
 from graphics2d.events import is_focus_event, is_pointer_event
@@ -223,6 +225,17 @@ def _handle_scenetree_drawing(node, size):
     node._draw_surface = None
 
 
+def pick_one_of(*args):
+	"""
+	Chooses one of the arguments randomly and returns it
+	"""
+	return random.choice(args)
+
+def pick_integer_between(start, stop):
+	"""
+	Chooses an integer between start and stop randomly
+	"""
+	return random.randint(start, stop)
 
 
 def calc_viewport_clip_rect(item):
