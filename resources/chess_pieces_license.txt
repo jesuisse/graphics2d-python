@@ -1,0 +1,12 @@
+# Chess pieces licensing
+
+The following files:
+   - chess_pieces_tileset_64.png
+   - chess_pieces_tileset_128.png
+   
+are in the public domain (CC0 license).
+
+Source: http://opengameart.org/content/madwares-chess-set 
+
+
+
