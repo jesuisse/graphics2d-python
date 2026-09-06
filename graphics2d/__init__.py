@@ -4,6 +4,9 @@ from pygame.math import Vector2
 import pygame.locals as const
 from graphics2d.simplified import *
 
+# easy version info
+_version = "graphics2d-python 1.0.0"
+
 # pygame constants that are handy to have in the global namespace
 # note that QUIT and VIDEORESIZE are not exported because the framework handles them itself and
 # user code never sees them anyway.
