@@ -5,6 +5,7 @@ from graphics2d import *
 from graphics2d.scenetree.sceneitem import SceneItem
 from graphics2d.scenetree.canvasitem import CanvasItem, CanvasColorRect
 from graphics2d.scenetree.canvascontainer import BoxContainer, PanelContainer
+import graphics2d.constants as G2D
 
 WIDTH = 700
 HEIGHT = 700
@@ -32,11 +33,11 @@ def on_ready():
 
     red = CanvasColorRect(name="red_rect", color=RED,
         weight_ratio=2,
-        min_size=(50, 50), max_size=(300, 200), flags=CanvasColorRect.ALIGN_END)
+        min_size=(50, 50), max_size=(300, 200), flags=G2D.V_ALIGN_END)
     blue = CanvasColorRect(name="blue_rect", color=BLUE,
-        min_size=(20, 50))
+        min_size=(20, 50), flags=G2D.H_EXPAND+G2D.V_ALIGN_CENTERED)
     yellow = CanvasColorRect(name="yellow_rect", color=YELLOW,
-        min_size=(20, 50), max_size=(200, 300), flags=CanvasColorRect.ALIGN_CENTERED)
+        min_size=(20, 50), max_size=(200, 300), flags=G2D.V_ALIGN_CENTERED)
 
     panel.add_child(box)
     box.add_child(red)
@@ -44,6 +45,6 @@ def on_ready():
     box.add_child(yellow)
     root.add_child(panel)
     tree.set_root(root)
-    set_window_title("SceneTree Test")
+    set_window_title("SceneTree BoxContainer Test")
 
 go()

@@ -3,11 +3,11 @@ import pygame.locals as _const
 
 _MOUSE_EVENTS = ['MOUSEMOTION', 'MOUSEBUTTONDOWN', 'MOUSEBUTTONUP']
 _TOUCH_EVENTS = ['FINGERMOTION', 'FINGERDOWN', 'FINGERUP', 'MULTIGESTURE']
-_FOCUS_EVENTS = ['KEYUP', 'KEYDOWN']
 
 _pointer_events = []
 _mouse_events = []
 _touch_events = []
+_focus_events = [_const.KEYUP, _const.KEYDOWN, _const.TEXTINPUT]
 _touch_available = False
 
 # Determine which pointer events are available
@@ -39,8 +39,7 @@ def is_focus_event(event : pygame.event.Event):
     Returns True if the given event is an event that should
     be sent to the focused item in the scene tree.
     """
-    return event in _FOCUS_EVENTS
-
+    return event.type in _focus_events
 
 
 def is_touch_supported() -> bool:

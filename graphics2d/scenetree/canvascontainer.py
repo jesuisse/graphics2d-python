@@ -1,10 +1,11 @@
 from graphics2d.scenetree.sceneitem import SceneItem
+from graphics2d.scenetree.notification import Notification
 from graphics2d.scenetree.canvasitem import CanvasItem, CanvasRectAreaItem
-from graphics2d.events import is_pointer_event, get_event_location
+from graphics2d.events import is_pointer_event, get_event_location, is_focus_event
 from pygame.math import Vector2
 import pygame.locals as const
 from pygame import Rect, Surface
-
+import graphics2d.constants as G2D
 
 class CanvasContainer(CanvasRectAreaItem):
     """
@@ -17,8 +18,17 @@ class CanvasContainer(CanvasRectAreaItem):
     If you add your CanvasItem to a CanvasContainer, however, the container will take care of
     distributing pointer input, positioning, sizing and drawing your CanvasItem. In effect, a CanvasContainer
     is fully responsible for whatever happens in it's own screen space. The framework will NOT handle
-    any of it, EXCEPT to send keyboard input to your CanvasItem directly if it has focus.
+    any of it, EXCEPT to send GUI keyboard input to your CanvasItem directly if it has focus.
     """
+
+    # signal resized(item: CanvasContainer, new_width, new_height)
+    resized = Notification("resized", "new_width", "new_height")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # stores the item that currently contains the mouse
+        self.item_containing_mouse = None
+
 
     def on_ready(self):
         self.layout()
@@ -27,6 +37,11 @@ class CanvasContainer(CanvasRectAreaItem):
     def on_resized(self, new_width, new_height):
         # This will set our size
         super().on_resized(new_width, new_height)
+        self.layout()
+        self.request_redraw()
+        self.emit(CanvasContainer.resized, new_width, new_height)
+    
+    def on_entered(self):
         self.layout()
         self.request_redraw()
 
@@ -105,21 +120,62 @@ class CanvasContainer(CanvasRectAreaItem):
         on_input mechanism hasn't consumed the event. The container then treates input
         according to type; mouse and touch events are sent only to CanvasRectAreaItem children
         that contain the pointer. 
-        """
+        """        
         if is_pointer_event(event):            
-            pos = get_event_location(event)
-            if pos:                
+            pos = get_event_location(event)            
+            if pos:
+                has_mouse = None
                 for child in self.children:
                     viewport_pos = child.get_viewport_position()
                     r = Rect(viewport_pos, child.get_bbox().size)
                     if isinstance(child, CanvasRectAreaItem) and r.collidepoint(pos):
+                        has_mouse = child
                         child.on_gui_input(event)
                         break
+                if self.item_containing_mouse != has_mouse:
+                    if self.item_containing_mouse:
+                        self.item_containing_mouse.on_mouse_leave()
+                    self.item_containing_mouse = has_mouse
+                    if has_mouse:
+                        has_mouse.on_mouse_enter(event)
+                        
             else:
                 # we get here for MOUSEWHEEL events. What do we do with them?
                 pass
+        
+        elif is_focus_event(event):
+            # keyboard events are sent to the focused CanvasItem by the framework. So this
+            # code is usually not executed. 
+            pass
+            #print("DEADEND - focus event at the wrong destination")
+        else:
+            print(self.name, "received but won't handle", event)
 
-        # keyboard events are sent to the focused CanvasItem by the framework. 
+    def child_requests_redraw(self, child):        
+        # We do not propagate child redraw requests up the tree, as we are responsible
+        # for handling their redrawing. We simply ask to be redrawn ourselves and will 
+        # then redraw (currently) all the children.
+        self.request_redraw()
+
+
+class FreeLayoutContainer(CanvasContainer):
+    """
+    This Container does *not* layout its children. Instead, they keep full
+    control over where they position themselves.
+
+    This is used as the scene tree root by default. 
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if 'bgcolor' in kwargs:
+            self.bgcolor = kwargs['bgcolor']
+        else:
+            self.bgcolor = None
+    
+    def on_draw(self, surface):        
+        if self.bgcolor:
+            surface.fill(self.bgcolor)
+        super().on_draw(surface)
 
 
 class BoxContainer(CanvasContainer):
@@ -133,13 +189,12 @@ class BoxContainer(CanvasContainer):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.orientation = self.HORIZONTAL
+        self.orientation = G2D.HORIZONTAL
         self.separation = 0
         if 'orientation' in kwargs:
             self.orientation = kwargs['orientation']
         if 'separation' in kwargs:
             self.separation = kwargs['separation']
-
 
     def get_content_min_size(self):
         """
@@ -160,14 +215,18 @@ class BoxContainer(CanvasContainer):
         size[1-self.orientation] = max_secondary
         return tuple(size)
 
+
     def layout(self):
         """
         Layouting the box container is fairly complicated because children act differently depending on whether
         they are constrained by a maximum size or not.
         """
+        if self.size[0] == 0 and self.size[1] == 0:
+            return
         min_total = max_total = weights = unconstrained_weights = visible_count = 0
         unconstrained = []
         orientation = self.orientation
+        flagshift = (G2D.H_LAYOUT, G2D.V_LAYOUT)[orientation]
 
         min_sizes = [None] * len(self.children)
         max_sizes = [None] * len(self.children)
@@ -184,18 +243,22 @@ class BoxContainer(CanvasContainer):
             min_total += min_sizes[i][orientation]
             maxsize = max_sizes[i][orientation]
             weight = child.get_weight_ratio()
-            if maxsize is None:
+            if child.flags & G2D.EXPAND << flagshift:
                 unconstrained.append(i)
                 unconstrained_weights += weight
-            else:
-                max_total += maxsize
+            elif maxsize is not None:
+                max_total += maxsize            
             weights += weight
 
         # now figure out how much leftover space we have
+        # TODO: This looks wrong. Shouldn't we subtract the total of the minimum sizes?
         leftover = self.size[orientation]
         if not unconstrained and leftover - max_total - (self.separation)*(visible_count-1) > 0:
             # all children are maxed out and we have space availabe. Calc separator
-            separation_gap = (leftover - max_total) / (visible_count-1)
+            if visible_count == 1:
+                separation_gap = leftover - max_total
+            else:
+                separation_gap = (leftover - max_total) / (visible_count-1)
         else:
             separation_gap = self.separation
 
@@ -212,13 +275,20 @@ class BoxContainer(CanvasContainer):
             cmax = max_sizes[i]
 
             max_available = leftover / weights * cweight
-            if cmax[orientation] is None:
+            if child.flags & G2D.EXPAND << flagshift:  # cmax[orientation] is None
                 # max-unconstrained children are calculated after the constrained ones
                 # because we can't know how much space will be left to distribute among
                 # themselves until we've handled all the max-constrained children.
                 continue
 
-            primary_size = int(max(cmin[orientation], min(max_available, cmax[orientation])))
+            if child.flags & G2D.SHRINK << flagshift:
+                # children with the SHRINK flag take up their minimum space 
+                # TODO: What if there isn't enough space available?
+                primary_size = int(cmin[orientation])
+            elif cmax[orientation]:
+                primary_size = int(max(cmin[orientation], min(max_available, cmax[orientation])))
+            else:
+                primary_size = int(max(cmin[orientation], max_available))
             weights -= cweight
             leftover -= primary_size
 
@@ -248,26 +318,31 @@ class BoxContainer(CanvasContainer):
             # might not work because we're not in the tree yet, possibly...
             if self.get_tree():
                 child.request_redraw()
-            
 
+        
 
     def _layout_along_secondary_axis(self, child, minsize, maxsize):
         orientation = self.orientation
-        if maxsize is None:
+        flagshift = (G2D.V_LAYOUT, G2D.H_LAYOUT)[orientation]
+       
+        if child.flags & G2D.EXPAND << flagshift:
             # child has unconstrained maximum, so we enlarge it to our own
             # size
             secondary_size = self.size[1-orientation]
-        else:
-            # otherwise, we make it as big as it can get inside our borders
+        elif maxsize is not None and not (child.flags & G2D.SHRINK << flagshift):
+            # otherwise, if we have a valid maximum we set the size to that
             secondary_size = min(self.size[1-orientation], maxsize)
+        else:
+            # otherwise, we use the child's minimum size
+            secondary_size = minsize
 
-        if minsize < self.size[1-orientation]:
+        if minsize < self.size[1-orientation] and not child.flags & G2D.FILL << flagshift:
             # default is ALIGN_START
             child.position[1-orientation] = 0
-            if child.flags & child.ALIGN_CENTERED:
+            if child.flags & G2D.ALIGN_CENTERED << flagshift:
                 child.position[1-orientation] = (self.size[1-orientation] - secondary_size) / 2.0
-            elif child.flags & child.ALIGN_END:
-                child.position[1-orientation] = self.size[1-orientation] - secondary_size
+            elif child.flags & G2D.ALIGN_END << flagshift:
+                child.position[1-orientation] = self.size[1-orientation] - secondary_size        
         else:
             self.position[1-orientation] = 0
             secondary_size = self.size[1-orientation]
@@ -277,12 +352,12 @@ class BoxContainer(CanvasContainer):
 class VBoxContainer(BoxContainer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.orientation = self.VERTICAL
+        self.orientation = G2D.VERTICAL
 
 class HBoxContainer(BoxContainer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.orientation = self.HORIZONTAL
+        self.orientation = G2D.HORIZONTAL
 
 class PanelContainer(CanvasContainer):
     """
