@@ -23,6 +23,16 @@ And here's one which animates the circle's color:
 
     go()
 
+## In development
+
+While the simple core functionality is stable, this is a work in progress.
+There is a scene tree implementation that's not ready for prime time yet
+but available for testing. Since the scene tree interface is not stable
+yet, you shouldn't have code or teaching material depend on it's current
+state.
+
+
+
 
 
 
